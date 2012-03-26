@@ -1,6 +1,8 @@
 {
-    "name": "application-name"
+    "name": "au9voronoi"
   , "version": "0.0.1"
+  , "author": "au9ustine"
+  , "node":"0.6.12"
   , "private": true
   , "dependencies": {
       "express": "2.5.2"
