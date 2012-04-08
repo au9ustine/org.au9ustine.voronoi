@@ -3,12 +3,14 @@ function Point(a,b){
     this.y = (b)?b:0;
 }
 
+
 var d = [], q = [];
+
 
 d.push(1,2,new Point(),new Point(1,2));
 q.push(2);
 
 
-console.log(d,d.length);
-console.log(q,q.length);
+console.log(d.length,d);
+console.log(q.length,q);
 
