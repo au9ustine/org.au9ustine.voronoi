@@ -1,16 +1,30 @@
-function Point(a,b){
-    this.x = (a)?a:0;
-    this.y = (b)?b:0;
+var point_module = require('./point');
+
+// Site Event type and event queue
+function handle_site_event(p){
+}
+var q = [];
+function init_q(event){
 }
 
+// Circle Event
+function handle_circle_event(gamma){
+}
 
-var d = [], q = [];
+// Beach Line Status Structure
 
+var t = [];
 
-d.push(1,2,new Point(),new Point(1,2));
-q.push(2);
+// Voronoi Diagram
+function voronoi_diagram(point_set){
+}
 
+// Display debug info
+function dbg_array(x){
+    console.log(x.length,x);
+}
 
-console.log(d.length,d);
-console.log(q.length,q);
-
+// main
+var p = [];
+point_module.rand_init(p,100);
+dbg_array(p);
