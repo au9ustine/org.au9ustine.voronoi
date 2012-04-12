@@ -24,15 +24,15 @@ function node() {
 // Predicative properties
 node.prototype.is_root = function() {
     return this.parent == null;
-}
+};
 
 node.prototype.is_black = function() {
     return this.color == COLOR.BLACK;
-}
+};
 
 node.prototype.is_red = function() {
     return this.color == COLOR.RED;
-}
+};
 
 node.prototype.is_leaf = function() {
     if(this.left)
@@ -40,7 +40,7 @@ node.prototype.is_leaf = function() {
     if(this.right)
         return false;
     return true;
-}
+};
 
 // Getter ans setter
 node.prototype.get_grandparent = function() {
@@ -48,7 +48,7 @@ node.prototype.get_grandparent = function() {
         return n.parent.parent;
     else
         return null;
-}
+};
 
 node.prototype.get_uncle = function() {
     var g = this.get_grandparent();
@@ -58,35 +58,35 @@ node.prototype.get_uncle = function() {
         return g.right;
     else
         return g.left;
-}
+};
 
 node.prototype.get_sibling = function() {
     if(n == n.parent.left)
         return n.parent.right;
     else
         return n.parent.left;
-}
+};
 
 node.prototype.set_child = function(n) {
     if(this.left)
         this.right = n;
     else
         this.left = n;
-}
+};
 
 node.prototype.get_first = function() {
     var n = this.left;
     while(n.left)
         n = n.left;
     return n;
-}
+};
 
 node.prototype.get_last = function() {
     var n = this.right;
     while(n.right)
         n = n.right;
     return n;
-}
+};
 
 node.prototype.next = function() {
     var parent;
@@ -98,7 +98,7 @@ node.prototype.next = function() {
     while((parent) && (parent.right == n))
         n = parent;
     return parent;
-}
+};
 
 node.prototype.prev = function() {
     var parent;
@@ -110,7 +110,7 @@ node.prototype.prev = function() {
     while((parent) && (parent.left == n))
         n = parent;
     return parent;
-}
+};
 
 // Compare this node with x
 node.prototype.compare = function(x) {
@@ -119,7 +119,7 @@ node.prototype.compare = function(x) {
     if(x.data > this.data)
         return -1;
     return 0;
-}
+};
 
 
 // Red-Black Tree Type
@@ -157,7 +157,7 @@ rb_tree.prototype.find_path_sentinel = function(x) {
             n = n.right;
     }
     return [n,sentinel,res];
-}
+};
 
 // Rotate n's children counter clockwisely
 rb_tree.prototype.rotate_left = function(n) {
@@ -182,7 +182,7 @@ rb_tree.prototype.rotate_left = function(n) {
         p.right.parent = p;
 
     q.left = p;
-}
+};
 
 // Rotate n's children clockwisely
 rb_tree.prototype.rotate_right = function(n) {
@@ -207,7 +207,7 @@ rb_tree.prototype.rotate_right = function(n) {
         p.left.parent = p;
 
     q.right = p;
-}
+};
 
 // Insert a node into red black tree
 rb_tree.prototype.insert = function(newbie) {
@@ -295,7 +295,7 @@ rb_tree.prototype.insert = function(newbie) {
     // Root node should be always black
     this.root.color = COLOR.BLACK;
     return null;
-}
+};
 
 // Remove a node from the red black tree
 rb_tree.prototype.remove = function(n) {
@@ -439,7 +439,7 @@ rb_tree.prototype.remove = function(n) {
 
     if(n)
         n.color = COLOR.BLACK;
-}
+};
 
 rb_tree.prototype.replace = function(veteran,newbie) {
     var parent = veteran.parent;
@@ -463,6 +463,7 @@ rb_tree.prototype.replace = function(veteran,newbie) {
 
     return [newbie,veteran];
 
-}
+};
+
 exports.node = node;
 exports.rb_tree = rb_tree;
