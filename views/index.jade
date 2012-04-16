@@ -4,18 +4,6 @@ block othercss
   style(type="text/css")
     body { padding-top: 60px; }
 
-
-block topbar
-  .topbar
-    .fill
-      .container
-        a(class="brand",href="#") au9voronoi
-        ul.nav
-          - if(topbar_items.length)
-            each item,item_url in topbar_items
-              li 
-                a #{item}
-
 block content
   .container
     .hero-unit

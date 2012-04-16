@@ -1,24 +1,11 @@
 extends layout
 
+
 block othercss
-  style(type="text/css")
-    body { padding-top: 60px; background-color: #000000; }
-
-block otherjs
-  script(src="/javascripts/jquery.min.js")
-  script(src="/javascripts/Three.js")
-
-block topbar
-  .topbar
-    .fill
-      .container
-        a(class="brand",href="#") au9voronoi
-        ul.nav
-          - if(topbar_items.length)
-            each item,item_url in topbar_items
-              li 
-                a #{item}
+  style
+    body { padding-top: 60px; }
 
 block content
+  div#voronoi_container.container
+  script(src="/javascripts/Three.js")
   script(src="/javascripts/demo.js")
-

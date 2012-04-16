@@ -1,4 +1,4 @@
-ar mouseX = 0, mouseY = 0,
+var mouseX = 0, mouseY = 0,
 
 windowHalfX = window.innerWidth / 2,
 windowHalfY = window.innerHeight / 2,
@@ -7,7 +7,7 @@ SEPARATION = 200,
 AMOUNTX = 10,
 AMOUNTY = 10,
 
-camera, scene, renderer;
+camera, scene, renderer, particleMaterial;
 
 init();
 animate();
@@ -17,18 +17,17 @@ function init() {
 	var container, separation = 100, amountX = 50, amountY = 50,
 	particles, particle;
 
-	container = document.createElement('div');
-	document.body.appendChild(container);
+	container = document.getElementById('voronoi_container');
 
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.z = 100;
 
 	scene = new THREE.Scene();
-
 	scene.add( camera );
 
 	renderer = new THREE.CanvasRenderer();
-	renderer.setSize( window.innerWidth, window.innerHeight );
+    var my_ratio = window.innerWidth / window.innerHeight;
+    renderer.setSize( 940, 940 / my_ratio);
 	container.appendChild( renderer.domElement );
 
 	// particles
@@ -36,7 +35,7 @@ function init() {
 	var PI2 = Math.PI * 2;
 	var material = new THREE.ParticleCanvasMaterial( {
 
-		color: 0xffffff,
+		color: 0x000000,
 		program: function ( context ) {
 
 			context.beginPath();
@@ -47,6 +46,8 @@ function init() {
 		}
 
 	} );
+
+    particleMaterial = material;
 
 	var geometry = new THREE.Geometry();
 
@@ -67,12 +68,13 @@ function init() {
 
 	// lines
 
-	var line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xffffff, opacity: 0.5 } ) );
+	var line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0x000000, opacity: 0.5 } ) );
 	scene.add( line );
 
 	document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 	document.addEventListener( 'touchstart', onDocumentTouchStart, false );
 	document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+    // document.addEventListener('mousedown', onDocumentMouseDown, false);
 }
 
 //
@@ -108,6 +110,16 @@ function onDocumentTouchMove( event ) {
 	}
 
 }
+
+// function onDocumentMouseDown(event) {
+
+//     var particle = new THREE.Particle(particleMaterial);
+//     particle.position.x = event.clientX;
+//     particle.position.y = event.clientY;
+//     particle.position.z = Math.random() * 2 - 1;
+//     particle.position.normalize();
+//     scene.add(particle);
+// }
 
 //
 

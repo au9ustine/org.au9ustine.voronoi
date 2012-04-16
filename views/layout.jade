@@ -2,12 +2,22 @@
 html
   head
     title= title
-    link(rel='stylesheet', href='/stylesheets/bs/bootstrap.css')
+    block maincss
+      link(rel='stylesheet', href='/stylesheets/bs/bootstrap.css')
     block othercss
     block otherjs
 
   body
     block topbar
+      .topbar
+        .fill
+          .container
+            a(class="brand",href="#") au9voronoi
+            ul.nav
+              - if(topbar_items)
+                each item_url,item in topbar_items
+                  li 
+                    a(href=item_url) #{item}
     block content
     block foot
       footer.footer

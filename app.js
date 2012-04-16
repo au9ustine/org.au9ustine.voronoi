@@ -29,9 +29,9 @@ var render_context = {
     title: 'au9voronoi',
     topbar_items: {
         'Home': '/', 
-        'About': '#', 
-        'Doc': '#', 
-        'Contact': '#'},
+        'About': '/about', 
+        'Doc': '/doc', 
+        'Contact': '/contact'},
     layout: false
 };
 app.get('/demo', function(req,res){
