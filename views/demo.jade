@@ -2,8 +2,11 @@ extends layout
 
 block othercss
   style(type="text/css")
-    body { padding-top: 60px; }
+    body { padding-top: 60px; background-color: #000000; }
 
+block otherjs
+  script(src="/javascripts/jquery.min.js")
+  script(src="/javascripts/Three.js")
 
 block topbar
   .topbar
@@ -17,10 +20,5 @@ block topbar
                 a #{item}
 
 block content
-  .container
-    .hero-unit
-      h1 Another Voronoi Demo Yet
-      p This is another Voronoi Diagram Demo based on Three\.js (for display and interactivity) and Node\.js (for calculation and web app host).  
-      p 
-        a.btn.primary.large(href="/demo") Take a tour!
+  script(src="/javascripts/demo.js")
 

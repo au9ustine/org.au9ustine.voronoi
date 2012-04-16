@@ -1,238 +1,626 @@
-// Based on Steven Fortune's C implementation
+// -------------------------- CONSTANT ----------------------------
+var EPSILON = 1e-9;
+var FLOAT_UPPER = 1e38;
+
+// ----------------------- CONTEXT --------------------------------
+function Context(points) {
+    this.input_points = [];     // input points [x,y]+
+    this.vertices = [];         // vertices [x,y]*
+    this.lines = [];            // triples, line a*x+b*y=c, [a,b,c]*
+    this.edges = [];            // triples, [edgenum,vertex1,vertex2]*
+    this.triangles = [];        // triples, [vertex1,vertex2,vertex3]*
+}
+
+// Output vertex
+Context.prototype.out_vertex = function(v) {
+    v.sitenum = this.vertices.length;
+    this.vertices.push([v.x,v.y]);
+};
+
+// Output triple
+Context.prototype.out_triple = function(s1,s2,s3) {
+    this.triangles.push([s1.sitenum,s2.sitenum,s3.sitenum]);
+};
+
+// Output besector line
+Context.prototype.out_bisector = function(edge) {
+    this.lines.push([edge.a,edge.b,edge.c]);
+};
+
+// Output edge
+Context.prototype.out_edge = function(edge) {
+    site_num_left = -1;
+    if(edge.points[Edge.LEFT] != null)
+        site_num_left = edge.points[Edge.LEFT].sitenum;
+    site_num_right = -1;
+    if(edge.points[Edge.RIGHT] != null)
+        site_num_right = edge.points[Edge.RIGHT].sitenum;
+    this.edges.push([edge.edgenum,site_num_left,site_num_right]);
+};
+
+Context.prototype.get_triangle = function(index) {
+    return this.triangles[index];
+};
+
+Context.prototype.get_triangle_vertices = function(index) {
+    triangle = this.get_triangle(index);
+    ret = [];
+    for(var i = 0; i < triangle.length; i++)
+        ret.push(this.input_points[triangle[i]]);
+    return ret;
+};
+
+Context.prototype.get_vertex = function(index) {
+    if(index != -1)
+        return this.vertices[index];
+    else
+        return null
+};
+
+Context.prototype.get_edge = function(index) {
+    var edgenum = this.edges[index][0];
+    var p0 = this.edges[index][1];
+    var p1 = this.edges[index][2];
+    var vertex0 = this.get_vertex(p0);
+    var vertex1 = this.get_vertex(p1);
+
+    if((vertex0 != null) && (vertex1 != null))
+        return [vertex0,vertex1];
+    else
+        return null;
+};
+
+// ---------------------------- COMMON ----------------------------
+function almost_equal(a,b,relative_error) {
+    if(relative_error == undefined)
+        relative_error = EPSILON;
+    var norm = Math.max(Math.abs(a), Math.abs(b));
+    return (norm < relative_error) || (Math.abs(a-b) < (relative_error * norm));
+}
+
+// ---------------------------- SITE ------------------------------
+function Site(point,site_num) { // point type is an ordered pair [x,y]
+    this.x = point[0];
+    this.y = point[1];
+    if(site_num == undefined)
+        this.sitenum = 0;            // Site number
+    else
+        this.sitenum = site_num;
+}
+
+Site.prototype.is_equal = function(other) {
+    return ((this.y == other.y) && (this.x == other.x));
+};
+
+Site.prototype.is_lessthan = function(other) {
+    if(this.y == other.y)
+        return (this.x < other.x);
+    else
+        return (this.y < other.y);
+};
+
+Site.compare = function(s1,s2) { // s1,s2 are points
+    if(s1.y < s2.y)
+        return -1;
+    if(s1.y > s2.y)
+        return 1;
+    if(s1.x < s2.x)
+        return -1;
+    if(s1.x > s2.x)
+        return 1;
+    return 0;
+};
+
+Site.prototype.distance = function(other) {
+    var dx = this.x - other.x;
+    var dy = this.y - other.y;
+    return Math.sqrt(dx*dx+dy*dy);
+};
+
+// --------------------------- SITE LIST --------------------------
+function Site_list(points) {
+    var raw = points.slice(0);  // Get the deep copy of points
+    this.data = []; 
+    for(var i = 0; i < raw.length; i++)
+        this.data.push(new Site(raw[i],i));
+
+    this.x_min = points[0][0];
+    this.y_min = points[0][1];
+    this.x_max = points[0][0];
+    this.y_max = points[0][1];
+
+    for(var i = 0; i < points.length; i++) {
+        var x = points[i][0];
+        var y = points[i][1];
+        // Get minimum and maximum of coordinates of points
+        if(x < this.x_min)
+            this.x_min = x;
+        if(y < this.y_min)
+            this.y_min = y;
+        if(x > this.x_max)
+            this.x_max = x;
+        if(y > this.y_max)
+            this.y_max = y;
+    }
+
+    // Sort the collection
+    this.data.sort(Site.compare);
+}
+
+Site_list.prototype.iter = function() {
+
+};
+
+// --------------------------- EDGE -------------------------------
+function Edge() {
+    this.a = 0.0;
+    this.b = 0.0;
+    this.c = 0.0;
+    this.points = [null,null];  // collections for site type
+    this.reg = [null,null];     // regular site collections
+    this.edgenum = 0;                // Edge Number
+}
+
+Edge.LEFT = 0;
+Edge.RIGHT = 1;
+Edge.EDGE_NUM = 0;
+Edge.DELETED = undefined;
+
+Edge.prototype.set_end_point = function(position,site) {
+    this.points[position] = site;
+    if(this.points[Edge.RIGHT - position] == null)
+        return false;
+    return true;
+};
+
+Edge.bisect = function(site1,site2) {
+    // Create a brand new edge
+    var new_edge = new Edge();
+
+    // Store the sites that this edge is bisecting
+    new_edge.reg[0] = site1;
+    new_edge.reg[1] = site2;
+
+    // Get the coordinate difference of two sites and their abs value
+    dx = site2.x - site1.x;
+    dy = site2.y - site1.y;
+    adx = Math.abs(dx);
+    ady = Math.abs(dy);
+
+    // Get the slope of the line
+    new_edge.c = site1.x * dx + site1.y * dy + 0.5 * (dx*dx + dy*dy);
+
+    // Set formula of the line
+    if(adx > ady) {
+        new_edge.a = 1.0; new_edge.b = dy/dx; new_edge.c /= dx;
+    } else {
+        new_edge.b = 1.0;
+        new_edge.a = dx/dy;
+        new_edge.c /= dy;
+    }
+
+    // Add edge count
+    new_edge.edgenum = Edge.EDGE_NUM;
+    Edge.EDGE_NUM++;
+
+    return new_edge;
+};
+
+// -------------------------- HALF-EDGE ---------------------------
+function Half_edge(edge,marker) {
+    this.left = null;           // the half edge leftside
+    this.right = null;          // the half edge rightside
+    if(edge == undefined)
+        edge = null;
+    this.edge = edge;           // the edge that the half edge belongs
+    // to
+    if(marker == undefined)
+        marker = Edge.LEFT;
+    this.marker = marker;       // Default marker is Edge.LEFT
+    this.vertex = null;         // vertex
+    this.ystar = 0.0;           // y*, treated as priority
+    this.qnext = null;        // next half edge in priority queue
+}
+
+Half_edge.prototype.is_equal = function(other) {
+    return ((this.ystar == other.ystar) &&
+            (this.vertex.x == other.vertex.x));
+};
+
+Half_edge.prototype.is_lessthan = function(other) {
+    if(this.ystar == other.ystar)
+        return this.vertex.x < other.vertex.x;
+    else
+        return this.ystar < other.ystar;
+};
+
+Half_edge.prototype.is_point_right_of = function(point) {
+    var edge = this.edge;
+    var top_site = edge.reg[1];
+    var right_of_site = point.x > top_site.x;
+    var above;
+
+    if((right_of_site) && (this.marker == Edge.LEFT))
+        return true;
+
+    if((!right_of_site) && (this.marker == Edge.RIGHT))
+        return false;
+
+    if(edge.a == 1.0) {
+        var dyp = point.y - top_site.y;
+        var dxp = point.x - top_site.x;
+        var fast = 0;
+
+        if((!right_of_site && edge.b < 0.0) || 
+           (right_of_site && edge.b >= 0.0)) {
+            above = (dyp >= edge.b * dxp);
+            fast = above;
+        } else {
+            above = ((point.x + point.y * edge.b) > edge.c);
+            if(edge.b < 0.0)
+                above = !above;
+            if(!above)
+                fast = 1;
+        }
+        if(!fast) {
+            var dxs = top_site.x - (edge.reg[0]).x;
+            above = (edge.b * (dxp*dxp - dyp*dyp)) < 
+                (dxs*dyp*(1.0+2.0*dxp/dxs+edge.b*edge.b));
+            if(edge.b < 0.0)
+                above = !above;
+        }
+    } else {
+        // edge.b == 1.0
+        var yl = edge.c - edge.a * point.x;
+        var t1 = point.y - yl;
+        var t2 = point.x - top_site.x;
+        var t3 = yl - top_site.y;
+        above = t1*t1 > t2*t2 + t3*t3;
+    }
+
+    if(this.marker == Edge.LEFT)
+        return above;
+    else
+        return !above;
+};
+
+Half_edge.prototype.intersect = function(other) {
+    var edge1 = this.edge;
+    var edge2 = other.edge;
+    if((edge1 == null) || (edge2 == null))
+        return null;
+
+    // If two edges bisect the same parent, return null
+    if(edge1.reg[1] == edge2.reg[1])
+        return null;
+
+    var d = (edge1.a * edge2.b) - (edge1.b * edge2.a);
+    if(almost_equal(d, 0.0))
+        return null;
+
+    var intersect_x = (edge1.c * edge2.b - edge2.c * edge1.b) / d;
+    var intersect_y = (edge2.c * edge1.a - edge1.c * edge2.a) / d;
+    var half_edge,edge;
+    if(edge1.reg[1].is_lessthan(edge2.reg[1])) {
+        half_edge = this;
+        edge = edge1;
+    } else {
+        half_edge = other;
+        edge = edge2;
+    }
+
+    var right_of_site = intersect_x >= edge.reg[1].x;
+    if((right_of_site && half_edge.marker == Edge.LEFT) ||
+       (!right_of_site && half_edge.marker == Edge.RIGHT))
+        return null;
+    
+    return new Site([intersect_x,intersect_y]);
+};
+
+Half_edge.prototype.left_reg = function(default_site) {
+    if(this.edge == null)
+        return defulat_site;
+    else if (this.marker == Edge.LEFT)
+        return this.edge.reg[Edge.LEFT];
+    else
+        return this.edge.reg[Edge.RIGHT];
+};
+
+Half_edge.prototype.right_reg = function(default_site) {
+    if(this.edge == null)
+        return default_site;
+    else if(this.marker == Edge.LEFT)
+        return this.edge.reg[Edge.RIGHT];
+    else
+        return this.edge.reg[Edge.LEFT];
+};
 
 
+// ------------------------ EDGE LIST -----------------------------
+function Edge_list(x_min,x_max,nsites) {
+    if(x_min > x_max){
+        var tmp = x_min;
+        x_min = x_max;
+        x_max = tmp;
+    }
+    this.hash_size = Math.floor(2*Math.sqrt(nsites+4));
+
+    this.x_min = x_min;
+    this.delta_x = x_max - x_min;
+    this.queues = [];
+    for(var i = 0; i < this.hash_size; i++)
+        this.queues.push(null);
+
+    this.left_end = new Half_edge();
+    this.right_end = new Half_edge();
+    this.left_end.right = this.right_end;
+    this.right_end.left = this.left_end;
+    this.queues[0] = this.left_end;
+    this.queues[-1] = this.right_end;
+};
+
+Edge_list.prototype.insert = function(left,half_edge) {
+    half_edge.left = left;
+    half_edge.right = left.right;
+    left.right.left = half_edge;
+    left.right = half_edge;
+};
+
+Edge_list.prototype.remove = function(half_edge) {
+    half_edge.left.right = half_edge.right;
+    half_edge.right.left = half_edge.left;
+    half_edge.edge = Edge.DELETED;
+};
+
+Edge_list.prototype.get_hash = function(b) {
+
+    if(b < 0)
+        return null;
+
+    b%=this.hash_size;
+
+    var half_edge = this.queues[b];
+
+    if(half_edge == null)
+        return half_edge;
+
+    if(half_edge.edge !== Edge.DELETED)
+        return half_edge;
+
+    this.queues[b] = null;
+    return null;
+};
 
 
+Edge_list.prototype.leftbnd = function(point) {
+    var bucket = Math.floor(((point.x - this.x_min) / this.delta_x * this.hash_size));
 
+    if(bucket < 0)
+        bucket = 0;
 
+    if(bucket >= this.hash_size)
+        bucket = this.hash_size - 1;
 
-// ------------------------ OLD VERSION ---------------------------
-// var rb_tree = require('./rbt.js').rb_tree; // Red-Black Tree
-// var node = require('./rbt.js').node;       // Red-Black Tree Node
+    var half_edge = this.get_hash(bucket);
+    if(half_edge == null) {
+        var i = 1;
+        while(true) {
+            half_edge = this.get_hash(bucket - i);
+            if(half_edge != null)
+                break;
+            half_edge = this.get_hash(bucket + i);
+            if(half_edge != null)
+                break;
+            i++;
+        }
+    }
 
-// // cell Type
-// function cell(site) {
-//     this.site = site;
-//     this.half_edges = [];
-// }
+    if((half_edge == this.left_end) ||
+       ((half_edge != this.right_end) && half_edge.is_point_right_of(point))) {
+        half_edge = half_edge.right;
+        while((half_edge != this.right_end) && 
+              (half_edge.is_point_right_of(point))) {
+            half_edge = half_edge.right;
+        }
+        half_edge = half_edge.left;
+    } else {
+        half_edge = half_edge.left;
+        while((half_edge != this.left_end) &&
+              (!half_edge.is_point_right_of(point))) {
+            half_edge = half_edge.left;
+        }
+    }
 
-// cell.prototype.init = function() {
-//     var half_edges_count = this.half_edges.length, edge;
+    if((bucket > 0) && (bucket < this.hash_size-1))
+        this.queues[bucket] = half_edge;
 
-//     while(half_edges_count--) {
-//         edge = this.half_edges[half_edges_count].edge;
-//         if((edge.vertex_a == null) || 
-//            (edge.vertex_b == null))
-//             this.half_edge.splice(half_edges_count,1);
-//     }
+    return half_edge;
+};
 
-//     this.half_edges.sort(function(a,b){return b.angle-a.angle});
-//     return this.half_edges.length;
-// };
+// ------------------------ Priority Queue ------------------------
+function Pq(y_min,y_max,nsites) {
+    this.y_min = y_min;
+    this.delta_y = y_max - y_min;
+    this.hash_size = Math.floor(4 * Math.sqrt(nsites));
+    this.count = 0;
+    this.min_index = 0;
+    this.queues = [];
+    for(var i = 0; i < this.hash_size; i++)
+        this.queues.push(new Half_edge());
+}
 
-// // Vertex Type
-// function vertex(x,y) {
-//     this.x = x;
-//     this.y = y;
-// }
+Pq.prototype.len = function() {
+    return this.count;
+};
 
-// // Half-Edge Type
-// function half_edge(edge,site_left,site_right) {
-//     this.site = site_left;
-//     this.edge = edge;
+Pq.prototype.is_empty = function() {
+    return this.count == 0;
+};
 
-//     if(site_right) {
-//         //              site_right.y - site_left.y
-//         // tan(radian) = --------------------------
-//         //              site_right.x - site_left.x
-//         this.angle = Math.atan2(site_right.y-site_left.y,
-//                                 site_right.x-site_left.x);
-//     } else {
-//         var vertex_a = edge.vertex_a, vertex_b = edge.vertex_b;
-//         if(edge.site_left == site_left)
-//             this.angle = Math.atan2(vertex_b.x-vertex_a.x,
-//                                     vertex_a.y-vertex_b.y);
-//         else
-//             this.angle = Math.atan2(vertex_a.x-vertex_b.x,
-//                                     vertex_b.y-vertex_a.y);
-//     }
-// }
+Pq.prototype.insert = function(half_edge, site, offset) {
+    half_edge.vertex = site;
+    half_edge.ystar = site.y + offset;
+    var last = this.queues[this.get_bucket(half_edge)];
+    var qnext = last.qnext;
+    while((qnext != null) && (half_edge > qnext)) {
+        last = qnext;
+        qnext = last.qnext;
+    }
+    half_edge.qnext = last.qnext;
+    last.qnext = half_edge;
+    this.count++;
+};
 
-// half_edge.prototype.get_start_vertex = function() {
-//     return (this.edge.site_left == this.site) ?
-//         (this.edge.vertex_a) : (this.edge.vertex_b);
-// };
+Pq.prototype.remove = function(half_edge) {
+    if(half_edge.vertex != null) {
+        var last = this.queues[this.get_bucket(half_edge)];
+        while(last.qnext != half_edge)
+            last = last.qnext;
+        last.qnext = half_edge.qnext;
+        this.count--;
+        half_edge.vertex = null;
+    }
+};
 
-// half_edge.prototype.get_end_vertex = function() {
-//     return (this.edge.site_left == this.site) ?
-//         (this.edge.vertex_b) : (this.edge.vertex_a);
-// };
+Pq.prototype.get_bucket = function(half_edge) {
+    var bucket = Math.floor(((half_edge.ystar - this.y_min) / this.delta_y) * this.hash_size);
 
-// // Edge Type
-// function edge(site_left,site_right) {
-//     this.site_left = site_left;
-//     this.site_right = site_right;
-//     this.vertex_a = this;
-//     this.vertex_b = null;
-// }
+    if(bucket < 0)
+        bucket = 0;
+    if(bucket >= this.hash_size)
+        bucket = this.hash_size - 1;
+    if(bucket < this.min_index)
+        this.min_index = bucket;
+    return bucket;
+};
 
-// // Voronoi Diagram (without bounding box)
-// function diagram() {
-//     this.cells = null;
-//     this.edges = null;
-//     this.beach_line = null;
-//     this.beach_section_cache = null;
-//     this.site_events = null;
-//     this.circle_events = null;
-//     this.first_circle_event = null;
-// }
+Pq.prototype.get_min_point = function() {
+    while(this.queues[this.min_index].qnext == null)
+        this.min_index++;
+    var half_edge = this.queues[this.min_index].qnext;
+    var x = half_edge.vertex.x;
+    var y = half_edge.ystar;
+    return new Site([x,y]);
+};
 
-// diagram.prototype.reset = function() {
+Pq.prototype.pop_min_half_edge = function() {
+    var curr = this.queues[this.min_index].qnext;
+    this.queues[this.min_index].qnext = curr.qnext;
+    this.count--;
+    return curr;
+};
 
-//     // Build Red-Black Tree for beach line
-//     if(this.beach_line == null)
-//         this.beach_line = new rb_tree();
+// ------------------------- FORTUNE'S MAIN -----------------------
+function Voronoi(){
+}
+Voronoi.main = function(points) {
+    var context = new Context(points);
+    var sites = new Site_list(points);
+    var edges = new Edge_list(sites.x_min, sites.x_max, sites.data.length);
+    var priority_queue = new Pq(sites.y_min, sites.y_max, sites.data.length);
+    var itersites = sites.data.slice(0);
 
-//     // Build cache for beach line
-//     if(this.beach_line.root){
-//         var section = this.beach_line.root.get_first();
-//         while(section){
-//             this.beach_section_cache.push(section);
-//             section = section.next();
-//         }
-//     }
-//     this.beach_line.root = null;
+    var bottomsite = itersites.shift();
+    var newsite = itersites.shift();
+    var min_point = Site([-FLOAT_UPPER,-FLOAT_UPPER]);
 
-//     // Circle event is isomorphic to 
-//     if(this.circle_events == null)
-//         this.circle_events = new rb_tree();
-//     this.circle_events.root = null;
+    while(true) {
+        if(!priority_queue.is_empty())
+            min_point = priority_queue.get_min_point();
 
-//     this.edges = [];
-//     this.cells = [];
-// };
+        if(newsite && (priority_queue.is_empty() || 
+                       (newsite.is_lessthan(min_point)))) {
+            var lbnd = edges.leftbnd(newsite);
+            var rbnd = lbnd.right;
 
-// diagram.prototype.new_edge = function(site_left, site_right,
-//                                       vertex_a, vertex_b) {
-//     var edge = new edge(site_left, site_right);
+            var bot = lbnd.right_reg(bottomsite);
+            var edge = Edge.bisect(bot, newsite);
+            context.out_bisector(edge);
 
-//     if(this.edges == null)
-//         this.edges = [];
-//     this.edges.push(edge);
+            var bisector = new Half_edge(edge, Edge.LEFT);
+            edges.insert(lbnd, bisector);
 
-//     if(vertex_a)
-//         set_edge_start_point(edge, site_left, site_right, vertex_a);
+            var point = lbnd.intersect(bisector);
+            if(point != null) {
+                priority_queue.remove(lbnd);
+                priority_queue.insert(lbnd, point, newsite.distance(point));
+            }
 
-//     if(vertex_b)
-//         set_edge_end_point(edge, site_left, site_right, vertex_b);
+            lbnd = bisector;
+            bisector = new Half_edge(edge, Edge.RIGHT);
+            edges.insert(lbnd, bisector);
 
-//     if(this.cells == null)
-//         this.cells = [];
-//     this.cells[site_left.id].half_edges.push(new half_edge(edge, site_left, site_right));
-//     this.cells[site_right.id].half_edges.push(new half_edge(edge, site_right, site_left));
+            point = bisector.intersect(rbnd);
+            if(point != null)
+                priority_queue.insert(bisector, point, newsite.distance(point));
 
-//     return edge;
-// };
+            newsite = itersites.shift();
+            if(newsite == undefined)
+                newsite = null;
 
-// diagram.prototype.new_border = function(site_left, vertex_a, vertex_b) {
-//     var edge = new edge(site_left, null);
-//     edge.vertex_a = vertex_a;
-//     edge.vertex_b = vertex_b;
+        } else if (!priority_queue.is_empty()) {
+            var lbnd = priority_queue.pop_min_half_edge();
+            var llbnd = lbnd.left;
+            var rbnd = lbnd.right;
+            var rrbnd = rbnd.right;
 
-//     if(this.edges == null)
-//         this.edges = [];
-//     this.edges.push(edge);
+            var bot = lbnd.left_reg(bottomsite);
+            var top = rbnd.right_reg(bottomsite);
 
-//     return edge;
-// };
+            var mid = lbnd.right_reg(bottomsite);
+            context.out_triple(bot, top, mid);
 
-// diagram.prototype.set_edge_start_point = function(edge, site_left, 
-//                                                   site_right, vertex) {
-//     if((edge.vertex_a) && (edge.vertex_b == null)) {
-//         edge.vertex_a = vertex;
-//         edge.site_left = site_left;
-//         edge.site_right = site_right;
-//     } else if (edge.site_left == site_right) {
-//         edge.vertex_b = vertex;
-//     } else {
-//         edge.vertex_a = vertex;
-//     }
-// };
+            var vertex = lbnd.vertex;
+            context.out_vertex(vertex);
 
-// diagram.prototype.set_edge_end_point = function(edge, site_left,
-//                                                 site_right, vertex) {
-//     this.set_edge_start_point(edge, site_right, site_left, vertex);
-// };
+            if(lbnd.edge.set_end_point(lbnd.marker, vertex))
+                context.out_edge(lbnd.edge);
+            if(rbnd.edge.set_end_point(rbnd.marker, vertex))
+                context.out_edge(rbnd.edge);
 
-// diagram.prototype.new_beach_section = function(site) {
-//     var arc = this.beach_section_cache.pop();
-//     if(arc == null)
-//         arc = {};
-//     arc.site = site;
-//     return arc;
-// };
+            edges.remove(lbnd);
+            priority_queue.remove(rbnd);
+            edges.remove(rbnd);
 
-// // Given arc and directrix, calculate the left break point of the arc
-// diagram.prototype.left_break_point = function(arc,directrix) {
+            var marker = Edge.LEFT;
+            if(bot.y > top.y) {
+                var tmp = bot;
+                bot = top;
+                top = tmp;
+                marker = Edge.RIGHT;
+            }
 
-//     var focus = arc.site,                       // Focus point (aka. focus)
-//     right_focus_x = focus.x,                    // Focus point x coordinate
-//     right_focus_y = focus.y,                    // Focus point y coordinate
-//     right_param_p = right_focus_y - directrix;  // parameter p of
-//                                                 // parabola which arc
-//                                                 // belongs to
-//     if(right_param_p == null)
-//         return right_focus_x;
+            var edge = Edge.bisect(bot, top);
+            context.out_bisector(edge);
 
-//     var arc_prev = arc.prev();
-//     if(arc_prev == null)        // touch the border of bounding box
-//         return -Infinity;
+            var bisector = new Half_edge(edge, marker);
 
-//     focus = arc_prev.site;
-//     var left_focus_x = focus.x,
-//     left_focus_y = focus.y,
-//     left_param_p = left_focus_y - directrix;
+            edges.insert(llbnd, bisector);
+            if(edge.set_end_point(Edge.RIGHT - marker, vertex))
+                context.out_edge(edge);
 
-//     if(left_param_p == null)
-//         return left_focus_x;
+            var point = llbnd.intersect(bisector);
+            if(point != null) {
+                priority_queue.remove(llbnd);
+                priority_queue.insert(llbnd, point, bot.distance(point));
+            }
 
-//     var hl = left_focus_x - right_focus_x,
-//     a = 1/right_param_p - 1/left_param_p,
-//     b = hl/left_param_p;
+            point = bisector.intersect(rrbnd);
+            if(point != null)
+                priority_queue.insert(bisector, point, bot.distance(point));
+        } else {
+            break;
+        }
+    }
 
-//     if(a) {
-//         return (-b + Math.sqrt(b*b - 2 * a * (hl*hl / (-2*left_param_p) - left_focus_y + left_param_p/2 + right_focus_y - right_param_p/2))) / a + right_focus_x;
-//     }
+    var half_edge = edges.left_end.right;
+    while(half_edge != edges.right_end) {
+        context.out_edge(half_edge.edge);
+        half_edge = half_edge.right;
+    }
 
-//     return (right_focus_x + left_focus_x) / 2;
-// };
+    return context;
+};
 
-// diagram.prototype.right_break_point = function(arc,directrix) {
-//     var right_arc = arc.next();
-//     if(right_arc)
-//         return this.left_break_point(right_arc, directrix);
-//     var site = arc.site;
-//     return site.y == directrix ? site.x : Infinity;
-// };
-
-
-// diagram.prototype.detech_beach_section = function(section) {
-//     this.detech_circle_event(section);
-//     this.beach_line.remove(section);
-//     this.beach_section_cache.push(section);
-// };
-
-// diagram.prototype.remove_beach_section = function(section) {
-//     var circle = section.circle_event,
-//     x = circle.x,
-//     y = circle.y_center,
-//     vertex = new vertex(x,y),
-//     prev_node = section.prev(),
-//     next_node = section.next(),
-
-//     this.detech_beach_section(section);
-
-//     var left_arc = prev_node;
-
-// };
+exports.Voronoi = Voronoi;
 

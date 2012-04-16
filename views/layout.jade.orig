@@ -1,0 +1,8 @@
+!!!5
+html
+  head
+    title= title
+    link(rel='stylesheet', href='/stylesheets/bs/bootstrap.css')
+    style(type="text/css")
+      body { padding-top: 60px; }
+  body!= body
