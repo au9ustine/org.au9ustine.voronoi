@@ -1,11 +1,16 @@
 extends layout
 
-
+block otherjs
+  
 block othercss
   style
     body { padding-top: 60px; }
 
 block content
   div#voronoi_container.container
-  script(src="/javascripts/Three.js")
+    canvas#voronoi_canvas(width="940")
+
+  script(src="/javascripts/voronoi.js")
   script(src="/javascripts/demo.js")
+
+

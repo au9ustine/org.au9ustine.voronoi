@@ -1,6 +1,6 @@
 // --------------------- IMPORTS ----------------------------------
 var express = require('express')
-  , voronoi = require('./voronoi.js').voronoi
+  , voronoi = require('./voronoi.js').Voronoi
   , routes = require('./routes');
 
 var app = module.exports = express.createServer();
@@ -39,6 +39,10 @@ app.get('/demo', function(req,res){
 });
 app.get('/', function(req,res){
     res.render('index', render_context);
+});
+app.post('/calculate', function(req,res){
+    var result = voronoi.main(req.body.sites);
+    res.json(result);
 });
 
 // --------------------- API FOR CALCULATION ----------------------
