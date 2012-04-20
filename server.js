@@ -48,6 +48,6 @@ app.post('/calculate', function(req,res){
 // --------------------- API FOR CALCULATION ----------------------
 
 // -------------------------- LAUNCH SERVER -----------------------
-app.listen(3000, function(){
+app.listen(16221, function(){
   console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
 });
