@@ -1,0 +1,127 @@
+extends layout
+
+block othercss
+  link(rel='stylesheet', href='/stylesheets/bs/docs/assets/css/docs.css')
+
+block otherjs
+  script(type="text/javascript",src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML")
+  script(type="text/x-mathjax-config")
+    | MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'],['\\(','\\)']]}});
+
+block content
+  .container
+    section#intro
+      .page-header
+        h1 Introduction 
+          small A brief intro to Voronoi diagram and Fortune's algorithm
+      .row
+        .span16
+          p 
+            | This demo is based on the well-known Fortune's algorithm
+            | which provides an efficient and fast way to construct
+            | Voronoi diagram.  The algorithm uses $O(n log n)$ and
+            | $O(n)$ space, and it has been the most optimal case
+            | because sorting n sites needs $\\Omega (n log n)$ time
+            | at least.
+
+    section#algo
+      .page-header
+        h1 The Diagram 
+          small More details about Voronoi diagram
+      .row
+        .span4
+          h2 Preliminaries 
+            p 
+              | About the specification of fundamental concepts such as
+              | site, line, edge, etc\.
+
+        .span12
+          h3 Site
+          p 
+
+            | If the euclidean distance between point $p$ and $q$ is
+            |  denoted as $$dist(p,q) :=
+            |  \\sqrt{(p_x+q_x)^2+(p_y+q_y)^2}$$ and the distance
+            |  between point $p$ and line $\\ell: ax+by+c=0$ is
+            |  denoted as $$dist(p,\\ell) := \\frac{|ax_p + by_p +
+            |  c|}{\\sqrt{a^2+b^2}}$$ Let $\\mathfrak{P} := \\{p_1,
+            |  p_2, \\ldots, p_n\\}$ be a set of $n$ distinct points
+            |  in the plane; these points are sites.
+
+          h3 diagram
+          p
+            | The Voronoi diagram of $\\mathfrak{P}$ can be defined as
+            | the subdivision of the plane into $n$ cells.  The cell
+            | has a property that there exists a site $p_i$ and a
+            | point $q$ which lies in the cell corresponding to the
+            | site $p_i$ if and only if $dist(q,p_i) < dist(q,p_j)$
+            | for each $p_j \\in \\mathfrak{P}$ with $j \\neq i$.
+
+          h3 Edge
+          p
+            | Edges can be composed of bisector line segment and
+            | vertices which are left vertex and right vertex exactly.
+      .row
+        .span4
+          h2 Fortune's algorithm 
+            p Step by Step
+
+        .span12
+          h3 Strategy 
+          p
+            | Build a horizonal line $($aka. the sweep line$)$ from top to
+            | bottom over the plane.  While the sweep is performed
+            | information is maintained regarding the structure that
+            | one wants to compute.
+          h3 event points
+          p 
+            | Those sites that are triggers for site events and circle
+            | events
+          h3 beach line
+          p
+
+            | Supposed a plane $s$ is divided into two by a line
+            | $\\ell$, and the above half one can be denoted as
+            | $\\ell^{+}$, therefore $\\forall q \\in \\ell^{+},
+            | dist(q,p_k) > dist(q,\\ell), p_k \\in s-\\ell^{+}, k
+            | \\in \\mathbb{N^{+}}$. Hence, the nearest site of $q$
+            | cannot lie below $\\ell$ if $q$ is at least as near to
+            | some site $p_i \\in \\ell^{+}, i \\in \\mathbb{N}$ as
+            | $q$ is to $\\ell$.  Hence, the locus of points that are
+            | closer to any site above $\\ell$ than to $\\ell$ itself
+            | is bounded by parabolic arcs.  These arcs are called
+            | beach line.
+
+          h3 site event
+          p
+
+            | When sweep line $\\ell$ reaches a new site, the parabola
+            | defined by this site is at first a degenerate parabola
+            | with zero width.  While it continues to move downward,
+            | the vertices on the vertical line segment connecting new
+            | site to beach line will move oppositely.  And a new arc
+            | appears.
+
+          h3 circle event
+          p
+
+            | On contrary with site event, it will cause an arc
+            | disappear when the vertices connect two bisectors
+            | which will intersect.
+
+      .row
+        .span4
+          img(src="/images/Fortunes-algorithm.gif",width="220px")
+          h6(style="text-align: center") 
+            | picture from 
+            a(href="http://en.wikipedia.org/wiki/Fortune%27s_algorithm") Wikipedia
+        .span12
+          h3 Date structures
+          ul
+            li 
+          
+          h3 Psudecode
+          pre
+            | 1. fjdksl
+            | 2. fdjkl
+       

@@ -1,0 +1,121 @@
+extends layout
+
+block othercss
+  link(rel='stylesheet', href='/stylesheets/bs/docs/assets/css/docs.css')
+
+block otherjs
+  script(type="text/javascript",src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML")
+  script(type="text/x-mathjax-config")
+    | MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'],['\\(','\\)']]}});
+
+block content
+  .container
+    section#intro
+      .page-header
+        h1 简介
+          small 对Voronoi图和Fortune算法简单介绍
+      .row
+        .span16
+          p 
+
+            | 这个演示小程序是基于著名的Fortune算法，该算法提供了一条高
+            | 效快速的方法来构造Voronoi图。Fortune算法在时间复杂度上为
+            | $O(n log n)$，空间复杂度为$O(n)$，因为其排序在时间复杂度
+            | 上至少需要$\\Omega(n log n)$，故该算法是最优情况了。
+
+
+    section#algo
+      .page-header
+        h1 Voronoi图 
+          small 关于Voronoi图的一些概念和细节
+      .row
+        .span4
+          h2 准备 
+            p 
+              | 如基点、
+
+        .span12
+          h3 基点 
+          p 
+
+            | 如果点$p$和$q$间的欧几里得距离记作$$dist(p,q) :=
+            | \\sqrt{(p_x+q_x)^2+(p_y+q_y)^2}$$并且点$p$到线$\\ell:
+            | ax+by+c=0$的欧几里得距离记作$$dist(p,\\ell) :=
+            | \\frac{|ax_p + by_p + c|}{\\sqrt{a^2+b^2}}$$那么，对于点
+            | 集$\\mathfrak{P} := \\{p_1, p_2, \\ldots, p_n\\}$有$n$个
+            | 不同的点在平面上，这些点被称为基点。
+
+          h3 Voronoi图
+          p
+            
+            | 点集$\\mathfrak{P}$的Voronoi图是在平面内划分成$n$个单元的
+            | 图。每个单元内具有一个性质：对于每个基点$p_j \\in
+            | \\mathfrak{P}, j \\neq i$，存在一个基点$p_i$和在其相对应
+            | 的单元内任意一点$q$当且仅当有$dist(q,p_i) < dist(q,p_j)$
+
+          h3 边
+          p
+            | 边由平分线线段和左右两个顶点组成。
+      .row
+        .span4
+          h2 Fortune算法
+            p 一些细节
+
+        .span12
+          h3 策略 
+          p
+
+            | 用一条水平直线（也就是扫描线）从上至下扫过整个平面，在扫
+            | 描中扫描线会维护一些与我们希望构造的结构相关的信息。
+
+          h3 事件点
+          p 
+
+            | 事件点会触发基点事件和圆事件
+
+          h3 海滩线 
+          p
+
+            | 假设平面记作$s$，被扫描线$\\ell$划分成两部分，其中上面一
+            | 部分记作$\\ell^{+}$，假设某个基点$p_i \\in \\ell^{+}, i
+            | \\in \\mathbb{N}$，使得$\\forall q \\in \\ell^{+},
+            | dist(q,p_k) > dist(q,\\ell), p_k \\in s-\\ell^{+}, k
+            | \\in \\mathbb{N^{+}}$。那么与$q$最近的那个基点就不可能出
+            | 现在$\\ell$下方。这样的点构成的集合其边界就是一条抛物线，
+            | 这条抛物线就是海滩线。
+
+          h3 基点事件 
+          p
+
+            | 当扫描线$\\ell$到达一个新的基点，抛物线
+
+            | When sweep line $\\ell$ reaches a new site, the parabola
+            | defined by this site is at first a degenerate parabola
+            | with zero width.  While it continues to move downward,
+            | the vertices on the vertical line segment connecting new
+            | site to beach line will move oppositely.  And a new arc
+            | appears.
+
+          h3 circle event
+          p
+
+            | On contrary with site event, it will cause an arc
+            | disappear when the vertices connect two bisectors
+            | which will intersect.
+
+      .row
+        .span4
+          img(src="/images/Fortunes-algorithm.gif",width="220px")
+          h6(style="text-align: center") 
+            | picture from 
+            a(href="http://en.wikipedia.org/wiki/Fortune%27s_algorithm") Wikipedia
+        .span12
+          h3 Date structures
+          ul
+            li 
+          
+          h3 Psudecode
+          pre
+            | 1. fjdksl
+            | 2. fdjkl
+       
