@@ -1,10 +1,11 @@
 var v_demo = {
 
-    recompute: Voronoi.main,
+    voronoi: new Voronoi(),
     sites: [],
     context: null,
     margin: 100,
     canvas: null,
+    bbox: {xl:0,xr:940,yt:0,yb:529},
 
     normalizeEventCoords: function(target,e) {
         if(!e) {
@@ -16,31 +17,31 @@ var v_demo = {
 		    x = e.pageX;
 		    y = e.pageY;
 	    }
-	    // else if (e.clientX || e.clientY) {
-		//     x = e.clientX+document.body.scrollLeft+document.documentElement.scrollLeft;
-		//     y = e.clientY+document.body.scrollTop+document.documentElement.scrollTop;
-	    // }
-	    return [x-target.offsetLeft,y-target.offsetTop];
+	    else if (e.clientX || e.clientY) {
+		    x = e.clientX+document.body.scrollLeft+document.documentElement.scrollLeft;
+		    y = e.clientY+document.body.scrollTop+document.documentElement.scrollTop;
+	    }
+	    return {x:x-target.offsetLeft,y:y-target.offsetTop};
     },
 
     init: function() {
         var me = this;
         this.canvas = document.getElementById('voronoi_canvas');
-        var current_aspect_ratio = window.innerWidth / window.innerHeight;
-        this.canvas.height = this.canvas.width / current_aspect_ratio;
+        // var current_aspect_ratio = window.innerWidth / window.innerHeight;
+        // this.canvas.height = this.canvas.width / current_aspect_ratio;
 		this.canvas.onmousemove = function(e) {
-            var sites = me.sites;
-			if (!sites.length) {return;}
-			var site = sites[0];
+            // var sites = me.sites;
+			if (!me.sites.length) {return;}
+			var site = me.sites[0];
 			var mouse = me.normalizeEventCoords(me.canvas,e);
-			site[0] = mouse[0];
-			site[1] = mouse[1];
-			me.context = me.recompute(sites);
+			site.x = mouse.x;
+			site.y = mouse.y;
+			me.context = me.voronoi.compute(me.sites,me.bbox);
 			me.render();
 		};
 		this.canvas.onclick = function(e) {
 			var mouse = me.normalizeEventCoords(me.canvas,e);
-			me.addSite(mouse[0],mouse[1]);
+			me.addSite(mouse.x,mouse.y);
 			me.render();
 		};
 		this.randomSites(10,true);
@@ -48,8 +49,8 @@ var v_demo = {
     },
     clearSites: function() {
 		// we want at least one site, the one tracking the mouse
-		this.sites = [[0,0]];
-        this.context = this.recompute(this.sites);
+		this.sites = [];
+        this.context = this.voronoi.compute(this.sites,this.bbox);
 	},
     randomSites: function(n,clear) {
 		if (clear) {this.sites = [];}
@@ -58,13 +59,13 @@ var v_demo = {
 		var yo = this.margin;
 		var dy = this.canvas.height-this.margin*2;
 		for (var i=0; i<n; i++) {
-			this.sites.push([self.Math.round(xo+self.Math.random()*dx),self.Math.round(yo+self.Math.random()*dy)]);
+			this.sites.push({x:self.Math.round(xo+self.Math.random()*dx),y:self.Math.round(yo+self.Math.random()*dy)});
 		}
-		this.context = this.recompute(this.sites);
+		this.context = this.voronoi.compute(this.sites,this.bbox);
 	},
     addSite: function(x,y) {
-		this.sites.push([x,y]);
-		this.context = this.recompute(this.sites);
+		this.sites.push({x:x,y:y});
+		this.context = this.voronoi.compute(this.sites,this.bbox);
 	},
     render: function() {
         var ctx = this.canvas.getContext('2d');
@@ -80,48 +81,51 @@ var v_demo = {
 		if (!this.context) {return;}
 		ctx.strokeStyle='#000';
 		// edges
-		var v;
-        if(this.context.edges) {
-            var edge;
+		var edges = this.context.edges;
+        var iEdge = edges.length;
+        if(iEdge) {
+            var edge,v;
             ctx.beginPath();
-            for(var i = 0; i < this.context.edges.length; i++) {
-                edge = this.context.get_edge(i);
-                if(edge){
-                    v = edge[0];
-                    ctx.moveTo(v[0],v[1]);
-                    v = edge[1];
-                    ctx.lineTo(v[0],v[1]);
-                }
+            while(iEdge--) {
+                edge = edges[iEdge];
+                v = edge.va;
+                ctx.moveTo(v.x,v.y);
+                v = edge.vb;
+                ctx.lineTo(v.x,v.y);
             }
             ctx.stroke();
-            // half-edges
-            for(var i = 0; i < this.context.edges.length; i++) {
-                var half_edge = this.context.get_halfedge(i);
-                if(half_edge) {
-                    v = half_edge[0];
-                    ctx.beginPath();
-                    if(v) {
-                        ctx.moveTo(v[0],v[1]);
-                        ctx.lineTo(Infinity,Infinity);
-                    } else {
-                        v = half_edge[1];
-                        ctx.moveTo(Infinity,Infinity);
-                        ctx.lineTo(v[0],v[1]);
-                    }
-                    ctx.fill();
-                }
-            }
+            
         }
 
+        // sites prepare
+        var sites = this.sites;
+        var nSites = sites.length;
+        if(nSites === 0){return;}
+
+        // cell
+        var cell = this.context.cells[this.sites[0].voronoiId];
+        if (cell !== undefined) {
+			var halfedges = cell.halfedges,
+			nHalfedges = halfedges.length;
+			if (nHalfedges < 3) {return;}
+			var	v = halfedges[0].getStartpoint();
+			ctx.beginPath();
+			ctx.moveTo(v.x,v.y);
+			for (var iHalfedge=0; iHalfedge<nHalfedges; iHalfedge++) {
+				v = halfedges[iHalfedge].getEndpoint();
+				ctx.lineTo(v.x,v.y);
+			}
+			ctx.fillStyle = '#faa';
+			ctx.fill();
+		}
+	    
         // sites
-        var sites = this.sites.slice(0);
-        if(!sites.length){return;}
         var site;
         ctx.beginPath();
         ctx.fillStyle = '#44f';
-        while(sites.length) {
-            site = sites.shift();
-            ctx.rect(site[0]-2/3,site[1]-2/3,2,2);
+        for(var iSite=nSites-1;iSite>=0;iSite-=1) {
+            site = sites[iSite];
+            ctx.rect(site.x-2/3,site.y-2/3,2,2);
         }
         ctx.fill();
     }

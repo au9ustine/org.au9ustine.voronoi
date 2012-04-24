@@ -30,12 +30,14 @@ var render_context = {
     topbar_items: {
         'Home': '/', 
         'About': '/about', 
-        'Doc': '/doc', 
-        'Contact': '/contact'},
+        'Demo': '/demo'},
     layout: false
 };
 app.get('/demo', function(req,res){
     res.render('demo', render_context);
+});
+app.get('/about', function(req,res){
+    res.render('about', render_context);
 });
 app.get('/', function(req,res){
     res.render('index', render_context);
