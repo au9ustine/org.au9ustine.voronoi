@@ -100,6 +100,7 @@ Voronoi.prototype.RBTree = function() {
 // 红黑树 插入
 Voronoi.prototype.RBTree.prototype.rbInsertSuccessor = function(node, successor) {
 	var parent;
+    // 按常规二叉树插入节点
 	if (node) {
 		// 此处后继的前一个节点连入node用于缓存
 		successor.rbPrevious = node;
@@ -118,9 +119,7 @@ Voronoi.prototype.RBTree.prototype.rbInsertSuccessor = function(node, successor)
 			node.rbRight = successor;
 		}
 		parent = node;
-	}
-	// 如果node是null，successor必须插入到树的最左端
-	else if (this.root) {
+	} else if (this.root) { // 如果node是null，successor必须插入到树的最左端
 		node = this.getFirst(this.root);
 		// prev/next作缓存
 		successor.rbPrevious = null;
@@ -140,32 +139,30 @@ Voronoi.prototype.RBTree.prototype.rbInsertSuccessor = function(node, successor)
 	successor.rbLeft = successor.rbRight = null;
 	successor.rbParent = parent;
 	successor.rbRed = true;
-	// Fixup the modified tree by recoloring nodes and performing
-	// rotations (2 at most) hence the red-black tree properties are
-	// preserved.
+    // 用重绘节点颜色和旋转的方法（最多2次旋转）来修正新插入节点后的树，
+	// 以此来保证该红黑树的性质。
 	var grandpa, uncle;
 	node = successor;
 	while (parent && parent.rbRed) {
 		grandpa = parent.rbParent;
 		if (parent === grandpa.rbLeft) {
 			uncle = grandpa.rbRight;
-			if (uncle && uncle.rbRed) {
+			if (uncle && uncle.rbRed) { // 第1种情况：叔节点是红的
 				parent.rbRed = uncle.rbRed = false;
 				grandpa.rbRed = true;
 				node = grandpa;
 			}
-			else {
+			else {              // 第2种情况：叔节点是黑的，新节点是父节点的右孩子
 				if (node === parent.rbRight) {
-					this.rbRotateLeft(parent);
+					this.rbRotateLeft(parent); // 左旋使之成为情况3
 					node = parent;
 					parent = node.rbParent;
 				}
-				parent.rbRed = false;
+				parent.rbRed = false; // 第3种情况：叔节点是黑的，新节点是父节点的左孩子
 				grandpa.rbRed = true;
-				this.rbRotateRight(grandpa);
+				this.rbRotateRight(grandpa); // 右旋使红黑树的颜色合法
 			}
-		}
-		else {
+		} else {                // 第4、5、6种情况与第1、2、3种情况对称
 			uncle = grandpa.rbLeft;
 			if (uncle && uncle.rbRed) {
 				parent.rbRed = uncle.rbRed = false;
@@ -185,11 +182,12 @@ Voronoi.prototype.RBTree.prototype.rbInsertSuccessor = function(node, successor)
 		}
 		parent = node.rbParent;
 	}
-	this.root.rbRed = false;
+	this.root.rbRed = false;    // 最后保持根节点颜色是黑的
 };
 
 Voronoi.prototype.RBTree.prototype.rbRemoveNode = function(node) {
-	// >>> rhill 2011-05-27: Performance: cache previous/next nodes
+    // 先按普通二叉树删除节点
+	// 此处prev/next用于缓存
 	if (node.rbNext) {
 		node.rbNext.rbPrevious = node.rbPrevious;
 	}
@@ -197,18 +195,16 @@ Voronoi.prototype.RBTree.prototype.rbRemoveNode = function(node) {
 		node.rbPrevious.rbNext = node.rbNext;
 	}
 	node.rbNext = node.rbPrevious = null;
-	// <<<
+
 	var parent = node.rbParent,
 	left = node.rbLeft,
 	right = node.rbRight,
 	next;
 	if (!left) {
 		next = right;
-	}
-	else if (!right) {
+	} else if (!right) {
 		next = left;
-	}
-	else {
+	} else {
 		next = this.getFirst(right);
 	}
 	if (parent) {
@@ -222,7 +218,7 @@ Voronoi.prototype.RBTree.prototype.rbRemoveNode = function(node) {
 	else {
 		this.root = next;
 	}
-	// enforce red-black rules
+	// 加入红黑树的性质
 	var isRed;
 	if (left && right) {
 		isRed = next.rbRed;
@@ -247,46 +243,45 @@ Voronoi.prototype.RBTree.prototype.rbRemoveNode = function(node) {
 		isRed = node.rbRed;
 		node = next;
 	}
-	// 'node' is now the sole successor's child and 'parent' its
-	// new parent (since the successor can have been moved)
+    // 因为后继可以被移除，所以node是单个后继的孩子节点并且parent是它的新父节点
 	if (node) {
 		node.rbParent = parent;
 	}
-	// the 'easy' cases
+	// 若为红，不需要进行调整也不会影响红黑树的性质
 	if (isRed) {return;}
 	if (node && node.rbRed) {
 		node.rbRed = false;
 		return;
 	}
-	// the other cases
+	// 若为黑，则进行调整
 	var sibling;
 	do {
 		if (node === this.root) {
 			break;
 		}
-		if (node === parent.rbLeft) {
+		if (node === parent.rbLeft) { // 如果是父节点的左孩子
 			sibling = parent.rbRight;
-			if (sibling.rbRed) {
+			if (sibling.rbRed) { // 第1种情况：兄弟节点是红的
 				sibling.rbRed = false;
 				parent.rbRed = true;
 				this.rbRotateLeft(parent);
 				sibling = parent.rbRight;
 			}
+            // 第2种情况：兄弟节点是黑的，且兄弟的孩子都是黑的
 			if ((sibling.rbLeft && sibling.rbLeft.rbRed) || (sibling.rbRight && sibling.rbRight.rbRed)) {
-				if (!sibling.rbRight || !sibling.rbRight.rbRed) {
+				if (!sibling.rbRight || !sibling.rbRight.rbRed) { // 第3种情况：兄弟节点是黑的，且兄弟的左孩子是红的，右孩子是黑的
 					sibling.rbLeft.rbRed = false;
 					sibling.rbRed = true;
-					this.rbRotateRight(sibling);
+					this.rbRotateRight(sibling); // 右旋保证红黑树的颜色性质
 					sibling = parent.rbRight;
 				}
-				sibling.rbRed = parent.rbRed;
+				sibling.rbRed = parent.rbRed; // 第4种情况：兄弟节点是黑的，且兄弟的右孩子是红的
 				parent.rbRed = sibling.rbRight.rbRed = false;
-				this.rbRotateLeft(parent);
+				this.rbRotateLeft(parent); // 左旋保证颜色性质，同时去掉额外的黑色把它变成单独黑色
 				node = this.root;
 				break;
 			}
-		}
-		else {
+		} else {                // 第5、6、7、8种情况与第1、2、3、4种情况对称
 			sibling = parent.rbLeft;
 			if (sibling.rbRed) {
 				sibling.rbRed = false;
@@ -312,57 +307,55 @@ Voronoi.prototype.RBTree.prototype.rbRemoveNode = function(node) {
 		node = parent;
 		parent = parent.rbParent;
 	} while (!node.rbRed);
-	if (node) {node.rbRed = false;}
+	if (node) {node.rbRed = false;} // 节点变成黑色
 };
 
+// 红黑树 左旋操作
 Voronoi.prototype.RBTree.prototype.rbRotateLeft = function(node) {
-	var p = node,
-	q = node.rbRight, // can't be null
-	parent = p.rbParent;
-	if (parent) {
-		if (parent.rbLeft === p) {
-			parent.rbLeft = q;
-		}
-		else {
-			parent.rbRight = q;
-		}
+    var x = node,               // 设要左旋的节点为x
+	y = node.rbRight;           // x的右孩子节点为y
+
+    x.rbRight = y.rbLeft;       // 将y的左子树变成x的右子树
+    if (y.rbLeft) {             
+        y.rbLeft.rbParent = x;  
 	}
-	else {
-		this.root = q;
-	}
-	q.rbParent = parent;
-	p.rbParent = q;
-	p.rbRight = q.rbLeft;
-	if (p.rbRight) {
-		p.rbRight.rbParent = p;
-	}
-	q.rbLeft = p;
+    y.rbParent = x.rbParent;    // 将x的父节点连到y上
+	if (!x.rbParent)
+        this.root = y;
+    else {
+		if (x === x.rbParent.rbLeft)
+			x.rbParent.rbLeft = y;
+		else 
+			x.rbParent.rbRight = y;
+	}	
+	y.rbLeft = x;               // 将x变成y的左孩子
+    x.rbParent = y;
 };
 
+// 红黑树 右旋操作
 Voronoi.prototype.RBTree.prototype.rbRotateRight = function(node) {
-	var p = node,
-	q = node.rbLeft, // can't be null
-	parent = p.rbParent;
-	if (parent) {
-		if (parent.rbLeft === p) {
-			parent.rbLeft = q;
-		}
-		else {
-			parent.rbRight = q;
-		}
-	}
-	else {
-		this.root = q;
-	}
-	q.rbParent = parent;
-	p.rbParent = q;
-	p.rbLeft = q.rbRight;
-	if (p.rbLeft) {
-		p.rbLeft.rbParent = p;
-	}
-	q.rbRight = p;
+	// 与左旋呈对称状
+    var x = node,
+    y = node.rbLeft;
+
+    x.rbLeft = y.rbRight;
+    if(y.rbRight)
+        y.rbRight.rbParent = x;
+
+    y.rbParent = x.rbParent;
+    if(!x.rbParent)
+        this.root = y;
+    else {
+        if(x === x.rbParent.rbLeft)
+            x.rbParent.rbLeft = y;
+        else
+            x.rbParent.rbRight = y;
+    }
+    y.rbRight = x;
+    x.rbParent = y;
 };
 
+// 取得该红黑树中最左端的节点
 Voronoi.prototype.RBTree.prototype.getFirst = function(node) {
 	while (node.rbLeft) {
 		node = node.rbLeft;
@@ -370,6 +363,7 @@ Voronoi.prototype.RBTree.prototype.getFirst = function(node) {
 	return node;
 };
 
+// 取得该红黑树中最右端的节点
 Voronoi.prototype.RBTree.prototype.getLast = function(node) {
 	while (node.rbRight) {
 		node = node.rbRight;
@@ -377,9 +371,7 @@ Voronoi.prototype.RBTree.prototype.getLast = function(node) {
 	return node;
 };
 
-// ---------------------------------------------------------------------------
-// Cell methods
-
+// Cell的方法
 Voronoi.prototype.Cell = function(site) {
 	this.site = site;
 	this.halfedges = [];
@@ -389,28 +381,18 @@ Voronoi.prototype.Cell.prototype.prepare = function() {
 	var halfedges = this.halfedges,
 	iHalfedge = halfedges.length,
 	edge;
-	// get rid of unused halfedges
-	// rhill 2011-05-27: Keep it simple, no point here in trying
-	// to be fancy: dangling edges are a typically a minority.
+	// 去除无效的半边(halfedge)
 	while (iHalfedge--) {
 		edge = halfedges[iHalfedge].edge;
 		if (!edge.vb || !edge.va) {
 			halfedges.splice(iHalfedge,1);
 		}
 	}
-	// rhill 2011-05-26: I tried to use a binary search at insertion
-	// time to keep the array sorted on-the-fly (in Cell.addHalfedge()).
-	// There was no real benefits in doing so, performance on
-	// Firefox 3.6 was improved marginally, while performance on
-	// Opera 11 was penalized marginally.
 	halfedges.sort(function(a,b){return b.angle-a.angle;});
 	return halfedges.length;
 };
 
-// ---------------------------------------------------------------------------
-// Edge methods
-//
-
+// 边 方法
 Voronoi.prototype.Vertex = function(x, y) {
 	this.x = x;
 	this.y = y;
@@ -425,21 +407,16 @@ Voronoi.prototype.Edge = function(lSite, rSite) {
 Voronoi.prototype.Halfedge = function(edge, lSite, rSite) {
 	this.site = lSite;
 	this.edge = edge;
-	// 'angle' is a value to be used for properly sorting the
-	// halfsegments counterclockwise. By convention, we will
-	// use the angle of the line defined by the 'site to the left'
-	// to the 'site to the right'.
-	// However, border edges have no 'site to the right': thus we
-	// use the angle of line perpendicular to the halfsegment (the
-	// edge should have both end points defined in such case.)
+    // 下面的角度值用于半线段的逆时针排序，为了方便，这里的角度是指左侧
+	// 基点与右侧基点所连线段所在直线的斜率的atan2值。然而有种特殊情况，
+	// 靠近包围框边际的边没有“右侧基点”，所以就使用对于半线段垂直的直线
+	// 的斜率的atan2值。
 	if (rSite) {
 		this.angle = Math.atan2(rSite.y-lSite.y, rSite.x-lSite.x);
 	}
 	else {
 		var va = edge.va,
 		vb = edge.vb;
-		// rhill 2011-05-31: used to call getStartpoint()/getEndpoint(),
-		// but for performance purpose, these are expanded in place here.
 		this.angle = edge.lSite === lSite ? Math.atan2(vb.x-va.x, va.y-vb.y)
 		    : Math.atan2(va.x-vb.x, vb.y-va.y);
 	}
@@ -453,9 +430,7 @@ Voronoi.prototype.Halfedge.prototype.getEndpoint = function() {
 	return this.edge.lSite === this.site ? this.edge.vb : this.edge.va;
 };
 
-// this create and add an edge to internal collection, and also create
-// two halfedges which are added to each site's counterclockwise array
-// of halfedges.
+// 创建一条边并加入内部集合中，并且创建两条半边逆时针地加入每个基点半边集合
 Voronoi.prototype.createEdge = function(lSite, rSite, va, vb) {
 	var edge = new this.Edge(lSite, rSite);
 	this.edges.push(edge);
@@ -496,13 +471,11 @@ Voronoi.prototype.setEdgeEndpoint = function(edge, lSite, rSite, vertex) {
 	this.setEdgeStartpoint(edge, rSite, lSite, vertex);
 };
 
-// ---------------------------------------------------------------------------
-// Beachline methods
-
-// rhill 2011-06-07: For some reasons, performance suffers significantly
-// when instanciating a literal object instead of an empty ctor
+// 海滩线 方法
 Voronoi.prototype.Beachsection = function() {
 };
+
+// 在计算Voronoi图的过程中会发生很多海滩线实例化，
 
 // rhill 2011-06-02: A lot of Beachsection instanciations
 // occur during the computation of the Voronoi diagram,
@@ -521,8 +494,7 @@ Voronoi.prototype.createBeachsection = function(site) {
 	return beachsection;
 };
 
-// calculate the left break point of a particular beach section,
-// given a particular sweep line
+// 给定特定扫描线计算一个普通海滩线线段的左断点
 Voronoi.prototype.leftBreakPoint = function(arc, directrix) {
 	// http://en.wikipedia.org/wiki/Parabola
 	// http://en.wikipedia.org/wiki/Quadratic_equation
@@ -588,8 +560,7 @@ Voronoi.prototype.leftBreakPoint = function(arc, directrix) {
 	return (rfocx+lfocx)/2;
 };
 
-// calculate the right break point of a particular beach section,
-// given a particular directrix
+// 给定一条准线，计算一个普通海滩线线段的右断点
 Voronoi.prototype.rightBreakPoint = function(arc, directrix) {
 	var rArc = arc.rbNext;
 	if (rArc) {
@@ -599,12 +570,14 @@ Voronoi.prototype.rightBreakPoint = function(arc, directrix) {
 	return site.y === directrix ? site.x : Infinity;
 };
 
+// 分离海滩线
 Voronoi.prototype.detachBeachsection = function(beachsection) {
 	this.detachCircleEvent(beachsection); // detach potentially attached circle event
 	this.beachline.rbRemoveNode(beachsection); // remove from RB-tree
 	this.beachsectionJunkyard.push(beachsection); // mark for reuse
 };
 
+// 去除海滩线线段
 Voronoi.prototype.removeBeachsection = function(beachsection) {
 	var circle = beachsection.circleEvent,
 	x = circle.x,
@@ -615,7 +588,7 @@ Voronoi.prototype.removeBeachsection = function(beachsection) {
 	disappearingTransitions = [beachsection],
 	abs_fn = Math.abs;
 
-	// remove collapsed beachsection from beachline
+    // 去除在海滩线中所有折叠的线段
 	this.detachBeachsection(beachsection);
 
 	// there could be more than one empty arc at the deletion point, this

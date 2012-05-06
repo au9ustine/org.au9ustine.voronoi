@@ -27,8 +27,6 @@ var v_demo = {
     init: function() {
         var me = this;
         this.canvas = document.getElementById('voronoi_canvas');
-        // var current_aspect_ratio = window.innerWidth / window.innerHeight;
-        // this.canvas.height = this.canvas.width / current_aspect_ratio;
 		this.canvas.onmousemove = function(e) {
             // var sites = me.sites;
 			if (!me.sites.length) {return;}
@@ -41,9 +39,22 @@ var v_demo = {
 		};
 		this.canvas.onclick = function(e) {
 			var mouse = me.normalizeEventCoords(me.canvas,e);
-			me.addSite(mouse.x,mouse.y);
+		    me.addSite(mouse.x,mouse.y);
 			me.render();
 		};
+        this.canvas.onkeydown = function(evt) {
+            switch(evt.keyCode){
+            case 37:
+                if(me.sites.length > 3) {
+                    me.sites.pop();
+                    me.context = me.voronoi.compute(me.sites,me.bbox);
+                    me.render();
+                }
+                break;
+            default:
+                break;
+            }
+        };
 		this.randomSites(10,true);
 		this.render();
     },
@@ -67,6 +78,12 @@ var v_demo = {
 		this.sites.push({x:x,y:y});
 		this.context = this.voronoi.compute(this.sites,this.bbox);
 	},
+    popSite: function() {
+        if(this.sites.length > 1){
+            this.sites.pop();
+            this.context = this.voronoi.compute(this.sites,this.bbox);
+        }
+    },
     render: function() {
         var ctx = this.canvas.getContext('2d');
 		// background
@@ -115,7 +132,7 @@ var v_demo = {
 				v = halfedges[iHalfedge].getEndpoint();
 				ctx.lineTo(v.x,v.y);
 			}
-			ctx.fillStyle = '#faa';
+			ctx.fillStyle = '#adff2f';
 			ctx.fill();
 		}
 	    
@@ -131,3 +148,4 @@ var v_demo = {
     }
 };
 v_demo.init();
+window.addEventListener('keydown',v_demo.canvas.onkeydown,true);
