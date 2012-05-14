@@ -591,46 +591,40 @@ Voronoi.prototype.removeBeachsection = function(beachsection) {
     // 去除在海滩线中所有折叠的线段
 	this.detachBeachsection(beachsection);
 
-	// there could be more than one empty arc at the deletion point, this
-	// happens when more than two edges are linked by the same vertex,
-	// so we will collect all those edges by looking up both sides of
-	// the deletion point.
-	// by the way, there is *always* a predecessor/successor to any collapsed
-	// beach section, it's just impossible to have a collapsing first/last
-	// beach sections on the beachline, since they obviously are unconstrained
-	// on their left/right side.
+    // 在删除点的时候可能存在不止一条空弧，这种情况会在不止两条边被相同
+	// 的顶点联接时发生。所以我们会通过寻找删除点的两侧情况来收集所有这
+	// 些边。另外，对于任何已收缩的海滩线线段总是存在一个前驱或后继，只
+	// 是在海滩线上不可能出现一个正在收缩的首条海滩线或最后一条海滩线，
+	// 因为在它们的左侧或右侧是未定义的。
 
-	// look left
+	// 向左寻找
 	var lArc = previous;
 	while (lArc.circleEvent && abs_fn(x-lArc.circleEvent.x)<1e-9 && abs_fn(y-lArc.circleEvent.ycenter)<1e-9) {
 		previous = lArc.rbPrevious;
 		disappearingTransitions.unshift(lArc);
-		this.detachBeachsection(lArc); // mark for reuse
+		this.detachBeachsection(lArc); // 标记以便重用
 		lArc = previous;
 	}
-	// even though it is not disappearing, I will also add the beach section
-	// immediately to the left of the left-most collapsed beach section, for
-	// convenience, since we need to refer to it later as this beach section
-	// is the 'left' site of an edge for which a start point is set.
+    // 即使不正在消失，在这里我也会在最左侧已收缩的海滩线线段的左侧加入
+	// 海滩线线段，为了方便，因为当这条海滩线线段作为为一条边的左基点时
+	// 我们需要在晚些时候引用它。
 	disappearingTransitions.unshift(lArc);
 	this.detachCircleEvent(lArc);
 
-	// look right
+	// 向右寻找
 	var rArc = next;
 	while (rArc.circleEvent && abs_fn(x-rArc.circleEvent.x)<1e-9 && abs_fn(y-rArc.circleEvent.ycenter)<1e-9) {
 		next = rArc.rbNext;
 		disappearingTransitions.push(rArc);
-		this.detachBeachsection(rArc); // mark for reuse
+		this.detachBeachsection(rArc); // 标记以便重用
 		rArc = next;
 	}
-	// we also have to add the beach section immediately to the right of the
-	// right-most collapsed beach section, since there is also a disappearing
-	// transition representing an edge's start point on its left.
+    // 我们也会在最右端已收缩的海滩线线段的右侧加入海滩线线段，因为存在
+    // 一个正在消失的转换来表示在一条边左侧的起点
 	disappearingTransitions.push(rArc);
 	this.detachCircleEvent(rArc);
 
-	// walk through all the disappearing transitions between beach sections and
-	// set the start point of their (implied) edge.
+    // 遍历所有作用在海滩线线段间正在消失的转换，并且设置它们边的起点。
 	var nArcs = disappearingTransitions.length,
 	iArc;
 	for (iArc=1; iArc<nArcs; iArc++) {
@@ -639,17 +633,14 @@ Voronoi.prototype.removeBeachsection = function(beachsection) {
 		this.setEdgeStartpoint(rArc.edge, lArc.site, rArc.site, vertex);
 	}
 
-	// create a new edge as we have now a new transition between
-	// two beach sections which were previously not adjacent.
-	// since this edge appears as a new vertex is defined, the vertex
-	// actually define an end point of the edge (relative to the site
-	// on the left)
+    // 现在我们拥有一个在两条海滩线线段间新的转换，而原先是不相邻的。因
+	// 为这条边因新顶点被定义后出现，顶点实际上定义了边的一个端点（相对
+	// 于基点的左侧来说）
 	lArc = disappearingTransitions[0];
 	rArc = disappearingTransitions[nArcs-1];
 	rArc.edge = this.createEdge(lArc.site, rArc.site, undefined, vertex);
 
-	// create circle events if any for beach sections left in the beachline
-	// adjacent to collapsed sections
+    // 如果任何海滩线线段留在邻接已退化线段的海滩线中，创建圆事件。
 	this.attachCircleEvent(lArc);
 	this.attachCircleEvent(rArc);
 };
@@ -1241,20 +1232,18 @@ Voronoi.prototype.closeCells = function(bbox) {
 };
 
 // ---------------------------------------------------------------------------
-// Top-level Fortune loop
+// 顶层Fortune循环
 
-// rhill 2011-05-19:
-//   Voronoi sites are kept client-side now, to allow
-//   user to freely modify content. At compute time,
-//   *references* to sites are copied locally.
+// Voronoi基点保留在浏览器端，是为了使用户能自由地修改内容，在计算时间
+// 上，对基点的引用会被局部拷贝
 Voronoi.prototype.compute = function(sites, bbox) {
 	// to measure execution time
 	var startTime = new Date();
 
-	// init internal state
+	// 初始化内部节点
 	this.reset();
 
-	// Initialize site event queue
+	// 初始化基点事件队列，并排序
 	var siteEvents = sites.slice(0);
 	siteEvents.sort(function(a,b){
 		var r = b.y - a.y;
@@ -1262,69 +1251,68 @@ Voronoi.prototype.compute = function(sites, bbox) {
 		return b.x - a.x;
 	});
 
-	// process queue
+	// 处理队列
 	var site = siteEvents.pop(),
 	siteid = 0,
-	xsitex = Number.MIN_VALUE, // to avoid duplicate sites
+	xsitex = Number.MIN_VALUE, // 为了避免重复的基点
 	xsitey = Number.MIN_VALUE,
 	cells = this.cells,
 	circle;
 
-	// main loop
+	// 主循环
 	for (;;) {
-		// we need to figure whether we handle a site or circle event
-		// for this we find out if there is a site event and it is
-		// 'earlier' than the circle event
+        // 我们需要判断处理的是基点事件还是圆事件，为此我们需要寻找是否
+		// 存在一个基点事件并且比圆事件早
 		circle = this.firstCircleEvent;
 
-		// add beach section
+		// 如果是基点事件，加入海滩线弧线段
 		if (site && (!circle || site.y < circle.y || (site.y === circle.y && site.x < circle.x))) {
-			// only if site is not a duplicate
+			// 仅当基点不重叠时
 			if (site.x !== xsitex || site.y !== xsitey) {
-				// first create cell for new site
+				// 首先为基点创建一个Voronoi单元
 				cells[siteid] = new this.Cell(site);
 				site.voronoiId = siteid++;
-				// then create a beachsection for that site
+				// 然后为该基点创建一条海滩线弧线段
 				this.addBeachsection(site);
-				// remember last site coords to detect duplicate
+				// 记忆最后的坐标以便检测是否重复
 				xsitey = site.y;
 				xsitex = site.x;
 			}
 			site = siteEvents.pop();
 		}
 
-		// remove beach section
+		// 如果是圆事件，移除海滩线线段
 		else if (circle) {
 			this.removeBeachsection(circle.arc);
 		}
 
-		// all done, quit
+		// 如果事件队列为空，结束
 		else {
 			break;
 		}
 	}
 
-	// wrapping-up:
-	//   connect dangling edges to bounding box
-	//   cut edges as per bounding box
-	//   discard edges completely outside bounding box
-	//   discard edges which are point-like
+    // 补充原Fortune算法：
+    // 连接不完全的边到包围框上
+    // 剪切边使之适合包围框
+    // 完全去掉在包围框外面的边
+    // 去掉像点一样的边（尤其是已退化的边）
 	this.clipEdges(bbox);
 
-	//   add missing edges in order to close opened cells
+    // 加入遗失的边用于闭合那些未闭合的Voronoi单元
 	this.closeCells(bbox);
 
-	// to measure execution time
+	// 衡量时间
 	var stopTime = new Date();
 
-	// prepare return values
+	// 准备返回值
 	var result = {
 		cells: this.cells,
 		edges: this.edges,
 		execTime: stopTime.getTime()-startTime.getTime()
 	};
 
-	// clean up
+	// 清理并重置，为下一次运算作准备
 	this.reset();
 
 	return result;
