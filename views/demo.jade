@@ -1,17 +1,43 @@
 extends layout
 
 block otherjs
-  
+  script(src="/javascripts/jquery-ui-1.8.16/js/jquery-1.6.2.min.js")
+  script(src="/stylesheets/bs/js/bootstrap-buttons.js")
+  script(src="/stylesheets/bs/js/bootstrap-alerts.js")
+  script(src="/stylesheets/bs/js/bootstrap-twipsy.js")
+  script(src="/stylesheets/bs/js/bootstrap-popover.js")
+
 block othercss
   style
     body { padding-top: 60px; }
 
 block content
-  center 按&larr;方向键可回退
-  div#voronoi_container.container
-    canvas#voronoi_canvas(width="940",height="529")
+  
 
-  script(src="/javascripts/voronoi.js")
-  script(src="/javascripts/demo.js")
+
+  div#voronoi_container.container
+    div(class="alert-message",data-alert="alert")
+      a.close(href="#") ×
+      span(class="label notice") NOTICE
+      &nbsp;按&larr;方向键可回退 &nbsp;
+      span(class="label notice") MOUSE
+      &nbsp;
+      span#mouse_pos
+
+    canvas#voronoi_canvas(width="940",height="529")
+    script(src="/javascripts/voronoi.js")
+    script(src="/javascripts/demo.js")
+    br
+    br
+    center
+      p
+        a#voronoi_drawable.btn(data-toggle="toggle",data-complete-text="截图模式",,data-content="若当处于截图模式时，无论鼠标在区域移动或单击不会触发构造算法",rel="popover",data-original-title="提示") 绘图模式
+        script(src="/javascripts/toggler.js")
+          
+
+
+
+
+  
 
 

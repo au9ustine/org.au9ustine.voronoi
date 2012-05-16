@@ -6,6 +6,7 @@ var v_demo = {
     margin: 100,
     canvas: null,
     bbox: {xl:0,xr:940,yt:0,yb:529},
+    eventsCache: [],
 
     normalizeEventCoords: function(target,e) {
         if(!e) {
@@ -27,6 +28,12 @@ var v_demo = {
     init: function() {
         var me = this;
         this.canvas = document.getElementById('voronoi_canvas');
+        document.body.onmousemove = function(e) {
+            var local_pos = document.getElementById('mouse_pos');
+            local_pos.innerHTML=e.pageX-document.getElementById('voronoi_canvas').offsetLeft;
+            local_pos.innerHTML+=',';
+            local_pos.innerHTML+=e.pageY-document.getElementById('voronoi_canvas').offsetTop;
+        };
 		this.canvas.onmousemove = function(e) {
             // var sites = me.sites;
 			if (!me.sites.length) {return;}
