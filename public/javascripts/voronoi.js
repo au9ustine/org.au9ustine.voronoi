@@ -1,57 +1,4 @@
-/**
-   Usage:
-
-   var sites = [{x:300,y:300}, {x:100,y:100}, {x:200,y:500}, {x:250,y:450}, {x:600,y:150}];
-   // xl, xr means x left, x right
-   // yt, yb means y top, y bottom
-   var bbox = {xl:0, xr:800, yt:0, yb:600};
-   var voronoi = new Voronoi();
-   // pass an object which exhibits xl, xr, yt, yb properties. The bounding
-   // box will be used to connect unbound edges, and to close open cells
-   result = voronoi.compute(sites, bbox);
-   // render, further analyze, etc.
-
-   Return value:
-   An object with the following properties:
-
-   result.edges = an array of unordered, unique Voronoi.Edge objects making up the Voronoi diagram.
-   result.cells = an array of Voronoi.Cell object making up the Voronoi diagram. A Cell object
-   might have an empty array of halfedges, meaning no Voronoi cell could be computed for a
-   particular cell.
-   result.execTime = the time it took to compute the Voronoi diagram, in milliseconds.
-
-   Voronoi.Edge object:
-   lSite: the Voronoi site object at the left of this Voronoi.Edge object.
-   rSite: the Voronoi site object at the right of this Voronoi.Edge object (can be null).
-   va: an object with an 'x' and a 'y' property defining the start point
-   (relative to the Voronoi site on the left) of this Voronoi.Edge object.
-   vb: an object with an 'x' and a 'y' property defining the end point
-   (relative to Voronoi site on the left) of this Voronoi.Edge object.
-
-   For edges which are used to close open cells (using the supplied bounding box), the
-   rSite property will be null.
-
-   Voronoi.Cell object:
-   site: the Voronoi site object associated with the Voronoi cell.
-   halfedges: an array of Voronoi.Halfedge objects, ordered counterclockwise, defining the
-   polygon for this Voronoi cell.
-
-   Voronoi.Halfedge object:
-   site: the Voronoi site object owning this Voronoi.Halfedge object.
-   edge: a reference to the unique Voronoi.Edge object underlying this Voronoi.Halfedge object.
-   getStartpoint(): a method returning an object with an 'x' and a 'y' property for
-   the start point of this halfedge. Keep in mind halfedges are always countercockwise.
-   getEndpoint(): a method returning an object with an 'x' and a 'y' property for
-   the end point of this halfedge. Keep in mind halfedges are always countercockwise.
-
-   TODO: Identify opportunities for performance improvement.
-   TODO: Let the user close the Voronoi cells, do not do it automatically. Not only let
-   him close the cells, but also allow him to close more than once using a different
-   bounding box for the same Voronoi diagram.
-*/
-
-/*global Math */
-
+// global math
 function Voronoi() {
 	this.edges = null;
 	this.cells = null;
@@ -388,22 +335,25 @@ Voronoi.prototype.Cell.prototype.prepare = function() {
 			halfedges.splice(iHalfedge,1);
 		}
 	}
+    // 按斜率排序
 	halfedges.sort(function(a,b){return b.angle-a.angle;});
 	return halfedges.length;
 };
 
-// 边 方法
+// 顶点
 Voronoi.prototype.Vertex = function(x, y) {
 	this.x = x;
 	this.y = y;
 };
 
+// 边
 Voronoi.prototype.Edge = function(lSite, rSite) {
 	this.lSite = lSite;
 	this.rSite = rSite;
 	this.va = this.vb = null;
 };
 
+// 半边
 Voronoi.prototype.Halfedge = function(edge, lSite, rSite) {
 	this.site = lSite;
 	this.edge = edge;
@@ -475,16 +425,10 @@ Voronoi.prototype.setEdgeEndpoint = function(edge, lSite, rSite, vertex) {
 Voronoi.prototype.Beachsection = function() {
 };
 
-// 在计算Voronoi图的过程中会发生很多海滩线实例化，
-
-// rhill 2011-06-02: A lot of Beachsection instanciations
-// occur during the computation of the Voronoi diagram,
-// somewhere between the number of sites and twice the
-// number of sites, while the number of Beachsections on the
-// beachline at any given time is comparatively low. For this
-// reason, we reuse already created Beachsections, in order
-// to avoid new memory allocation. This resulted in a measurable
-// performance gain.
+// 当海滩线弧线段在海滩线上某个给定的时间上相对较低时，在计算Voronoi图
+// 的过程中会发生很多海滩线实例化，数量大概在基点数量的一倍到两倍之间。
+// 所以我们选择重用已经创建的海滩线弧线段而非实例化一个全新的线段，以此
+// 避免浪费内存（内存大小依据浏览器所在的平台而定）
 Voronoi.prototype.createBeachsection = function(site) {
 	var beachsection = this.beachsectionJunkyard.pop();
 	if (!beachsection) {
@@ -494,7 +438,7 @@ Voronoi.prototype.createBeachsection = function(site) {
 	return beachsection;
 };
 
-// 给定特定扫描线计算一个普通海滩线线段的左断点
+// 给定特定扫描线计算一个普通海滩线线段的左断点 (代码来自rhill的实现)
 Voronoi.prototype.leftBreakPoint = function(arc, directrix) {
 	// http://en.wikipedia.org/wiki/Parabola
 	// http://en.wikipedia.org/wiki/Quadratic_equation
@@ -526,15 +470,12 @@ Voronoi.prototype.leftBreakPoint = function(arc, directrix) {
 	// c2 = h2*h2/(4*p2)+k2,
 	// x = (-b2 + Math.sqrt(b2*b2 - 4*(a2-a1)*(c2-k1))) / (2*(a2-a1)) + x1
 
-	// change code below at your own risk: care has been taken to
-	// reduce errors due to computers' finite arithmetic precision.
-	// Maybe can still be improved, will see if any more of this
-	// kind of errors pop up again.
+    // 若要对这里的代码作出衍生性的修改，则需要注意计算机有限精度条件下的排错。
 	var site = arc.site,
 	rfocx = site.x,
 	rfocy = site.y,
 	pby2 = rfocy-directrix;
-	// parabola in degenerate case where focus is on directrix
+    // 当焦点在准线上时退化情况下的抛物线
 	if (!pby2) {
 		return rfocx;
 	}
@@ -546,7 +487,7 @@ Voronoi.prototype.leftBreakPoint = function(arc, directrix) {
 	var lfocx = site.x,
 	lfocy = site.y,
 	plby2 = lfocy-directrix;
-	// parabola in degenerate case where focus is on directrix
+    // 当焦点在准线上时退化情况下的抛物线
 	if (!plby2) {
 		return lfocx;
 	}
@@ -556,7 +497,7 @@ Voronoi.prototype.leftBreakPoint = function(arc, directrix) {
 	if (aby2) {
 		return (-b+this.sqrt(b*b-2*aby2*(hl*hl/(-2*plby2)-lfocy+plby2/2+rfocy-pby2/2)))/aby2+rfocx;
 	}
-	// both parabolas have same distance to directrix, thus break point is midway
+    // 当抛物线到准线都具有相同距离时，断点在中间
 	return (rfocx+lfocx)/2;
 };
 
@@ -649,28 +590,21 @@ Voronoi.prototype.addBeachsection = function(site) {
 	var x = site.x,
 	directrix = site.y;
 
-	// find the left and right beach sections which will surround the newly
-	// created beach section.
-	// rhill 2011-06-01: This loop is one of the most often executed,
-	// hence we expand in-place the comparison-against-epsilon calls.
+    // 在新创建的海滩线周围寻找左侧和右侧的海滩线线段。这个循环经常被执行
+    // 因为我们使用in-place的方式来展开与误差epsilon比较的函数调用。
 	var lArc, rArc,
 	dxl, dxr,
 	node = this.beachline.root;
 
 	while (node) {
 		dxl = this.leftBreakPoint(node,directrix)-x;
-		// x lessThanWithEpsilon xl => falls somewhere before the left edge of the beachsection
+        // x和xl在误差允许内，落在大概海滩线左侧边之前
 		if (dxl > 1e-9) {
-			// this case should never happen
-			// if (!node.rbLeft) {
-			//	rArc = node.rbLeft;
-			//	break;
-			//	}
 			node = node.rbLeft;
 		}
 		else {
 			dxr = x-this.rightBreakPoint(node,directrix);
-			// x greaterThanWithEpsilon xr => falls somewhere after the right edge of the beachsection
+            // x和xr在误差允许范围外，落在海滩线右侧边
 			if (dxr > 1e-9) {
 				if (!node.rbRight) {
 					lArc = node;
