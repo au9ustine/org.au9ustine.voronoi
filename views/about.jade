@@ -16,9 +16,9 @@ block content
           small 对Voronoi图和Fortune算法简单介绍
       .row
         .span16
-          p 
-            a(href="/demo")这个演示小程序
-            是基于著名的Fortune算法，该算法提供了一条高效快速的方法来构造Voronoi图。Fortune算法在时间复杂度上为$O(n log n)$，空间复杂度为$O(n)$，因为其排序在时间复杂度上至少需要$\\Omega(n log n)$，故该算法是最优情况了。
+          p
+            a(href="/demo") 这个演示小程序
+            | 是基于著名的Fortune算法，该算法提供了一条高效快速的方法来构造Voronoi图。Fortune算法在时间复杂度上为$O(n \text{log} n)$，空间复杂度为$O(n)$，因为其排序在时间复杂度上至少需要$\Omega(n \text{log} n)$，故该算法是最优情况了。
 
     section#algo
       .page-header
@@ -30,15 +30,16 @@ block content
             p 一些基本的概念和定义
             img(src="/images/Coloured_Voronoi_3D_slice.png",width="220px")
             blockquote
-              p 上图为由一个随机点集生成的Voronoi图的一部分
-              small 来自
-                a(href="http://en.wikipedia.org/wiki/Voronoi_diagram")维基百科
+              p 
+                | 上图为由一个随机点集生成的Voronoi图的一部分
+                small 来自
+                  a(href="http://en.wikipedia.org/wiki/Voronoi_diagram") 维基百科
         .span12
           h3 距离和基点 
-          p 如果在二维平面内某两点$p$和$q$间的欧几里得距离记作$$dist(p,q) := \\sqrt{(p_x-q_x)^2+(p_y-q_y)^2}$$并且点$p$到线$\\ell: ax+by+c=0$的欧几里得距离记作$$dist(p,\\ell) := \\frac{|ax_p + by_p + c|}{\\sqrt{a^2+b^2}}$$那么，对于点集$\\mathfrak{P} := \\{p_1, p_2, \\ldots, p_n\\}$有$n$个不同的点在平面上，这些点被称为基点。
+          p 如果在二维平面内某两点$p$和$q$间的欧几里得距离记作 $$dist(p,q) := \sqrt{(p_x-q_x)^2+(p_y-q_y)^2}$$ 并且点$p$到线$\ell: ax+by+c=0$的欧几里得距离记作$$dist(p,\ell) := \frac{|ax_p + by_p + c|}{\sqrt{a^2+b^2}}$$那么，对于点集 $\mathfrak{P} := \{p_1, p_2, \ldots, p_n\}$ 有$n$个不同的点在平面上，这些点被称为基点。
           
           h3 Voronoi图
-          p 点集$\\mathfrak{P}$的Voronoi图是在平面内划分成$n$个单元的图。每个单元内具有一个性质：对于每个基点$p_j \\in \\mathfrak{P}, j \\neq i,\\quad i,j \\in \\mathbb{N}^{+}, i,j \\leq n$，存在一个基点$p_i$和在其相对应的单元内任意一点$q$当且仅当有$dist(q,p_i) < dist(q,p_j)$
+          p 点集$\mathfrak{P}$的Voronoi图是在平面内划分成$n$个单元的图。每个单元内具有一个性质：对于每个基点$p_j \in \mathfrak{P}, j \neq i,\quad i,j \in \mathbb{N}^{+}, i,j \leq n$，存在一个基点$p_i$和在其相对应的单元内任意一点$q$当且仅当有$dist(q,p_i) < dist(q,p_j)$
 
           h3 边
           p 边由平分线线段和左右两个顶点组成。
@@ -49,7 +50,7 @@ block content
 
         .span12
           h3 策略 
-          p 用一条水平直线（也就是扫描线）从上至下扫过整个平面，在扫描中扫描线会维护一些与我们希望构造的结构相关的信息。当扫描线经过事件点时将触发相关的基点事件或圆事件，根据触发的事件形成或消去动态的弧，弧与弧的交点经过的运动轨迹形成Voronoi图一个单元的边。当扫描线扫描完全部的基点后，Voronoi图中各单元的边及其顶点就恰好绘制完成。因为最多需要扫描n个基点，而将n个基点变成有序的基点集合需要最少$\\Omega(nlogn)$的时间，而就目前所有的此类排序算法中最少也需要$\\Omega(nlogn)$的时间，因此，此策略已是最优解。
+          p 用一条水平直线（也就是扫描线）从上至下扫过整个平面，在扫描中扫描线会维护一些与我们希望构造的结构相关的信息。当扫描线经过事件点时将触发相关的基点事件或圆事件，根据触发的事件形成或消去动态的弧，弧与弧的交点经过的运动轨迹形成Voronoi图一个单元的边。当扫描线扫描完全部的基点后，Voronoi图中各单元的边及其顶点就恰好绘制完成。因为最多需要扫描n个基点，而将n个基点变成有序的基点集合需要最少$\Omega(nlogn)$的时间，而就目前所有的此类排序算法中最少也需要$\Omega(nlogn)$的时间，因此，此策略已是最优解。
 
           h3 事件点
           p 会触发基点事件和圆事件的基点
@@ -63,18 +64,19 @@ block content
           br
           img(src="/images/Fortunes-algorithm.gif",width="220px")
           blockquote
-            p 扫描线经过事件点时，将激发基点事件或圆事件
-            small 来自
-              a(href="http://en.wikipedia.org/wiki/Fortune%27s_algorithm") Wikipedia
+            p 
+              | 扫描线经过事件点时，将激发基点事件或圆事件
+              small 来自
+                a(href="http://en.wikipedia.org/wiki/Fortune%27s_algorithm") Wikipedia
         .span12
           h3 扫描线 
           p 一条水平的直线。这条直线将在算法开始后自上而下扫过整个平面。
 
           h3 海滩线 
-          p 假设平面记作$\\mathfrak{S}$，被扫描线$\\ell$划分成两部分，其中上面一部分记作$\\ell^{+}$，那么平面的其他部分记作$\\mathfrak{S}-\\ell^{+}$。假设某个基点$p_i \\in \\ell^{+}, i\\in \\mathbb{N}$，使得点$q$有$\\forall q \\in \\ell^{+},dist(q,p_k) > dist(q,\\ell), p_k \\in \\mathfrak{S}-\\ell^{+}, k \\in \\mathbb{N^{+}}$。那么与$q$最近的那个基点就不可能出现在$\\ell$下方。这样的点构成的集合其边界就是一条抛物线。这些抛物线相互相交后，其靠近边界的那些抛物线弧线段就是海滩线。
+          p 假设平面记作$\mathfrak{S}$，被扫描线$\ell$划分成两部分，其中上面一部分记作$\ell^{+}$，那么平面的其他部分记作$\mathfrak{S}-\ell^{+}$。假设某个基点$p_i \in \ell^{+}, i\in \mathbb{N}$，使得点$q$有$\forall q \in \ell^{+},dist(q,p_k) > dist(q,\ell), p_k \in \mathfrak{S}-\ell^{+}, k \in \mathbb{N^{+}}$。那么与$q$最近的那个基点就不可能出现在$\ell$下方。这样的点构成的集合其边界就是一条抛物线。这些抛物线相互相交后，其靠近边界的那些抛物线弧线段就是海滩线。
 
           h3 基点事件 
-          p 假设扫描线记作$\\ell$，海滩线记作$b$，则$\\ell$到达某个新的基点$p$时，在$b$和$\\ell$间存在一线段$s$满足$s\\perp \\ell$，且 $\\exists v_a,v_b \\in s\\cap b$, 当$\\ell$继续向下运动时，$v_a, v_b$则会向着彼此相反的方向运动。两点运动的轨迹形成一条新的Voronoi单元的边。
+          p 假设扫描线记作$\ell$，海滩线记作$b$，则$\ell$到达某个新的基点$p$时，在$b$和$\ell$间存在一线段$s$满足$s\perp \ell$，且 $\exists v_a,v_b \in s\cap b$, 当$\ell$继续向下运动时，$v_a, v_b$则会向着彼此相反的方向运动。两点运动的轨迹形成一条新的Voronoi单元的边。
 
           h3 圆事件
           p 当海滩线上有两段弧汇合起来，则相应地在Voronoi图中肯定存在相应的两条边汇合起来的情况。海滩线上依次首位相接的任何三段弧在其对应的三个基点都会确定一个外接圆，当扫描线触及该圆的最低点时，便发生一次圆事件。海滩线上的已有的弧，只有在经过某次的圆事件之后，才有可能消失。
@@ -88,138 +90,139 @@ block content
               code {x:300, y:300}
             li 包围框，规定了点的作用域，例如
               code {xl:0, xr:800, yt:0, yb:600}
-            li 边，包括左基点
+            li 
+              | 边，包括左基点
               code lSite
-              、右基点
+              | 、右基点
               code rSite
-              、左右端点
+              | 、左右端点
               code va,vb
           h3 算法主循环
           table.zebra-striped
             tbody
               tr
                 td 输入
-                td 平面点集$\\mathcal{P} := \\{p_1, p_2, \\ldots, p_n\\}$
+                td 平面点集$\mathcal{P} := \{p_1, p_2, \ldots, p_n\}$
               tr
                 td 输出
                 td 
-                  以双向链接边表$\\mathcal{E}$ 表示的边集合
+                  | 以双向链接边表$\mathcal{E}$ 表示的边集合
                   br
-                  单元集合$\\mathcal{C}$
+                  | 单元集合$\mathcal{C}$
               tr
                 td 1. 
                 td
-                  初始化事件队列$\\mathcal{Q}$：将所有的基点事件插入其中
+                  | 初始化事件队列$\mathcal{Q}$：将所有的基点事件插入其中
                   br
-                  初始化状态结构$\\mathcal{T}$：将其置空
+                  | 初始化状态结构$\mathcal{T}$：将其置空
                   br
-                  初始化双向边表$\\mathcal{E}$：将其置空
+                  | 初始化双向边表$\mathcal{E}$：将其置空
               tr
                 td 2. 
                 td
-                  $\\mathbf{while }(\\mathcal{Q}非空)$
+                  | $\mathbf{while }(\mathcal{Q}非空)$
               tr
                 td 3. 
                 td
-                  $\\mathbf{do}$ 将y坐标最大的事件从$\\mathcal{Q}$中取出
+                  | $\mathbf{do}$ 将y坐标最大的事件从$\mathcal{Q}$中取出
               tr
                 td 4.
                 td
-                  $\\mathbf{if}($这是一个发生在基点$p_i$处的基点事件$)$
+                  | $\mathbf{if}($这是一个发生在基点$p_i$处的基点事件$)$
               tr
                 td 5.
                 td
-                  $\\qquad\\mathbf{then}\\ \\mathsf{HandleSiteEvent}(p_i)$
+                  | $\qquad\mathbf{then}\ \mathsf{HandleSiteEvent}(p_i)$
               tr
                 td 6.
                 td
-                  $\\qquad\\mathbf{else}\\ \\mathsf{HandleCircleEvent}(\\gamma)$
-                  $($此处的$\\gamma$是$\\mathcal{T}$中一片叶子，对应即将消失的弧$)$
+                  | $\qquad\mathbf{else}\ \mathsf{HandleCircleEvent}(\gamma)$
+                  | $($此处的$\gamma$是$\mathcal{T}$中一片叶子，对应即将消失的弧$)$
               tr
                 td 7.
                 td
-                  计算出一个包围框，其大小能包含所有Voronoi图中的顶点。通过对$\\mathcal{E}$的适当调整，将$\\mathcal{E}$中单向无穷边联接到包围框上
+                  | 计算出一个包围框，其大小能包含所有Voronoi图中的顶点。通过对$\mathcal{E}$的适当调整，将$\mathcal{E}$中单向无穷边联接到包围框上
               tr
                 td 8.
                 td
-                  遍历$\\mathcal{E}$中的所有半边，增加相应的单位记录，设置好指向这些单元的指针，以及由这些单元发出的指针
+                  | 遍历$\mathcal{E}$中的所有半边，增加相应的单位记录，设置好指向这些单元的指针，以及由这些单元发出的指针
           
-          h3 处理基点事件$\\mathsf{HandleSiteEvent}(P_i)$
+          h3 处理基点事件$\mathsf{HandleSiteEvent}(P_i)$
           table.zebra-striped
             tbody
               tr
                 td 1.
                 td
-                  $\\mathbf{if}$ $\\mathcal{T}$为空
+                  | $\mathbf{if}$ $\mathcal{T}$为空
                   br
-                  $\\qquad\\mathbf{then}$ 将$p_i$插入其中
+                  | $\qquad\mathbf{then}$ 将$p_i$插入其中
                   br
-                  $\\qquad\\mathbf{return}$
+                  | $\qquad\mathbf{return}$
                   br
-                  $\\mathbf{else}$
+                  | $\mathbf{else}$
                   br
-                  $\\qquad$执行步骤$2\\sim 5$
+                  | $\qquad$执行步骤$2\sim 5$
               tr
                 td 2.
                 td
-                  从$\\mathcal{T}$中查找出位于$p_i$垂直上方的那段弧$\\alpha$
+                  | 从$\mathcal{T}$中查找出位于$p_i$垂直上方的那段弧$\alpha$
                   br
-                  $\\mathbf{if}$ 对应于$\\alpha$的那匹叶子有个指针指向$\\mathcal{T}$中某个圆事件
+                  | $\mathbf{if}$ 对应于$\alpha$的那匹叶子有个指针指向$\mathcal{T}$中某个圆事件
                   br
-                  $\\qquad\\mathbf{then}$ 从$\\mathcal{T}$中去除该事件（说明该圆事件是一次误警）
+                  | $\qquad\mathbf{then}$ 从$\mathcal{T}$中去除该事件（说明该圆事件是一次误警）
               tr
                 td 3.
                 td
-                  将原来对应于$\\alpha$的那匹叶子，替换为一簇由三匹叶子构成的子树：居中的那匹叶子记录下新基点$p_i$，两侧的两片叶子分别记录下原先记录于$\\alpha$的基点$p_i$。两个内部节点分别对应于新生出的断点，它们分别记录下基点对$\\langle p_j,p_i\\rangle$和$\\langle p_i,p_j\\rangle$。若有必要，须对$\\mathcal{T}$作调整，使其重新平衡。
+                  | 将原来对应于$\alpha$的那匹叶子，替换为一簇由三匹叶子构成的子树：居中的那匹叶子记录下新基点$p_i$，两侧的两片叶子分别记录下原先记录于$\alpha$的基点$p_i$。两个内部节点分别对应于新生出的断点，它们分别记录下基点对$\langle p_j,p_i\rangle$和$\langle p_i,p_j\rangle$。若有必要，须对$\mathcal{T}$作调整，使其重新平衡。
               tr
                 td 4.
                 td
-                  对应于将单元$\\mathcal{V}(p_i)$和$\\mathcal{V}(p_j)$分割开来的那条边，在Voronoi图结构中创建一个半边记录（该半边将由两个断点逐步绘制出来）
+                  | 对应于将单元$\mathcal{V}(p_i)$和$\mathcal{V}(p_j)$分割开来的那条边，在Voronoi图结构中创建一个半边记录（该半边将由两个断点逐步绘制出来）
               tr
                 td 5.
                 td
-                  找出$p_i$在其中居于左侧的邻接弧三元组，检查是否有断点汇聚到一点。
+                  | 找出$p_i$在其中居于左侧的邻接弧三元组，检查是否有断点汇聚到一点。
                   br
-                  $\\mathbf{if}$ 汇聚到一点
+                  | $\mathbf{if}$ 汇聚到一点
                   br
-                  $\\qquad\\mathbf{then}$ 将对应的圆事件插入事件队列$\\mathcal{T}$，并且在$\\mathcal{Q}$中的该节点与$\\mathcal{T}$中对应的节点之间设置指针，使之互相指向对方。
+                  | $\qquad\mathbf{then}$ 将对应的圆事件插入事件队列$\mathcal{T}$，并且在$\mathcal{Q}$中的该节点与$\mathcal{T}$中对应的节点之间设置指针，使之互相指向对方。
                   br
-                  找出$p_i$在其中居于右侧的那个邻接弧三元组，做类似的处理
-          h3 处理圆事件$\\mathsf{HandleCircleEvent}(P_i)$
+                  | 找出$p_i$在其中居于右侧的那个邻接弧三元组，做类似的处理
+          h3 处理圆事件$\mathsf{HandleCircleEvent}(P_i)$
           table.zebra-striped
             tbody
               tr
                 td 1.
                 td
-                  将即将消失的弧$\\alpha$对应的叶子$\\gamma$从$\\mathcal{T}$去除
+                  | 将即将消失的弧$\alpha$对应的叶子$\gamma$从$\mathcal{T}$去除
                   br
-                  检查相关的节点，更新其中与断点有关的基点对信息
+                  | 检查相关的节点，更新其中与断点有关的基点对信息
                   br
-                  若有必要，删除与$\\alpha$相关的圆事件（在$\\mathcal{T}$中$\\gamma$的前驱与后继节点拥有相应的指针，这些指针可以帮助找到相应的事件）
+                  | 若有必要，删除与$\alpha$相关的圆事件（在$\mathcal{T}$中$\gamma$的前驱与后继节点拥有相应的指针，这些指针可以帮助找到相应的事件）
               tr
                 td 2.
                 td
-                  更新当前Voronoi图的双向链接边表$\\mathcal{E}$：
+                  | 更新当前Voronoi图的双向链接边表$\mathcal{E}$：
                   br
-                  $\\mathbf{if}$ 对应该事件的圆心
+                  | $\mathbf{if}$ 对应该事件的圆心
                   br
-                  $\\qquad\\mathbf{then}$ 生成一个Voronoi顶点记录，并将该记录插入双向链接边表
+                  | $\qquad\mathbf{then}$ 生成一个Voronoi顶点记录，并将该记录插入双向链接边表
                   br
-                  $\\mathbf{if}$ 对应于海滩线上新生出的断点
+                  | $\mathbf{if}$ 对应于海滩线上新生出的断点
                   br
-                  $\\qquad\\mathbf{then}$ 生成两个半边记录，并正确地设置好相应的指针
+                  | $\qquad\mathbf{then}$ 生成两个半边记录，并正确地设置好相应的指针
                   br
-                  将这三个新记录与终止于该Voronoi顶点的其他半边链接起来
+                  | 将这三个新记录与终止于该Voronoi顶点的其他半边链接起来
               tr
                 td 3.
                 td
-                  检查该邻接弧三元组所对应的两个断点是否汇合在一点上
+                  | 检查该邻接弧三元组所对应的两个断点是否汇合在一点上
                   br
-                  $\\mathbf{if}$ 汇聚在一点上
+                  | $\mathbf{if}$ 汇聚在一点上
                   br
-                  $\\qquad\\mathbf{then}$ 将对应的圆事件插入到事件队列$\\mathcal{Q}$，并在$\\mathcal{Q}$中该节点和$\\mathcal{T}$中与之对应的节点之间设置指针，使之相互指向对方
+                  | $\qquad\mathbf{then}$ 将对应的圆事件插入到事件队列$\mathcal{Q}$，并在$\mathcal{Q}$中该节点和$\mathcal{T}$中与之对应的节点之间设置指针，使之相互指向对方
                   br
-                  对该弧做类似的操作
+                  | 对该弧做类似的操作
     section#other
       .page-header
         h1 关于 
@@ -228,18 +231,19 @@ block content
         .span4
           h3 许可证 
         .span12
-          p 本demo之全部代码采用
+          p 
+            | 本demo之全部代码采用
             a(href="http://www.opensource.org/licenses/mit-license.php") MIT License
-            许可证协议发布
-          对于文档则采用：
-          br
-          a(rel="license",href="http://creativecommons.org/licenses/by-nc-nd/2.5/cn/")
+            | 许可证协议发布
+            | 对于文档则采用：
+            br
+            a(rel="license",href="http://creativecommons.org/licenses/by-nc-nd/2.5/cn/")
             img(alt="知识共享许可协议",style="border-width:0",src="http://i.creativecommons.org/l/by-nc-nd/2.5/cn/88x31.png")
-          br
-          本作品采用
-          a(rel="license",href="http://creativecommons.org/licenses/by-nc-nd/2.5/cn/")知识共享署名-非商业性使用-禁止演绎 2.5 中国大陆许可协议
-          进行许可。
-          br
+            br
+            | 本作品采用
+            a(rel="license",href="http://creativecommons.org/licenses/by-nc-nd/2.5/cn/") 知识共享署名-非商业性使用-禁止演绎 2.5 中国大陆许可协议
+            | 进行许可。
+            br
           p 对其第三方引用的库、图片等将采取与原作品发布协议相同的许可证协议发布
       .row
         .span4
@@ -252,16 +256,16 @@ block content
               th 联系方式
             tbody
               tr
-                td 邵天晨
+                td au9ustine
                 td
                    a(href="mailto:duke.augustine@gmail.com")
                      img(src="/images/mail.png")
-                   &nbsp;
+                   span &nbsp;
                    a(href="https://twitter.com/au9ustine")
                      img(src="/images/twitter.png")
-                   &nbsp;
+                   span &nbsp;
                    a(href="http://weibo.com/salut0n")
                      img(src="/images/weibo.png")
-                   &nbsp;
+                   span &nbsp;
                    img(src="/images/qq.png") 
                     

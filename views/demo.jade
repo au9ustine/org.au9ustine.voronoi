@@ -8,17 +8,16 @@ block otherjs
   script(src="/stylesheets/bs/js/bootstrap-popover.js")
 
 block othercss
-  style
-    body { padding-top: 60px; }
+  style body { padding-top: 60px; }
 
 block content
   div#voronoi_container.container
     div(class="alert-message",data-alert="alert")
       a.close(href="#") ×
       span(class="label notice") NOTICE
-      &nbsp;按&larr;方向键可回退 &nbsp;
+      span &nbsp;按&larr;方向键可回退 &nbsp;
       span(class="label notice") MOUSE
-      &nbsp;
+      span &nbsp;
       span#mouse_pos
 
     canvas#voronoi_canvas(width="940",height="529")
