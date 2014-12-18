@@ -1,0 +1,22 @@
+// h1= title
+// p Welcome to #{title}
+.topbar
+  .fill
+    .container
+      a(class="brand",href="#") au9voronoi
+      ul.nav
+        - if(topbar_items.length)
+          each item in topbar_items
+            li 
+              a #{item}
+
+.container
+  .hero-unit
+    h1 Another Voronoi Demo Yet
+    p This is another Voronoi Diagram Demo based on Three\.js (for display and interactivity) and Node\.js (for calculation and web app host).  
+    p 
+      a.btn.primary.large Take a tour!
+
+footer.footer
+  .container
+    p &copy; Tianchen Shao, 2012

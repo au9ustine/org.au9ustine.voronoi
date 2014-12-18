@@ -1,0 +1,6 @@
+*~
+*.doc
+*.py
+msdoc/*
+node_modules/*
+target/

@@ -1,0 +1,25 @@
+doctype
+html
+  head
+    title= title
+    block maincss
+      link(rel='stylesheet', href='/stylesheets/bs/bootstrap.css')
+    block othercss
+    block otherjs
+
+  body
+    block topbar
+      .topbar
+        .fill
+          .container
+            a(class="brand",href="#") au9voronoi
+            ul.nav
+              - if(topbar_items)
+                each item_url,item in topbar_items
+                  li 
+                    a(href=item_url) #{item}
+    block content
+    block foot
+      footer.footer
+        .container
+          p Copyright &copy; 2012,2013,2014 Shao Tianchen.  All rights reserved.

@@ -1,0 +1,17 @@
+extends layout
+
+block othercss
+  style(type="text/css") body { padding-top: 60px; }
+
+block content
+  .container
+    .hero-unit
+      h1 Another Voronoi Demo Yet
+      p 
+        | 这是一个简单的demo用于演示Voronoi图及其构造，更多详细说明请看 
+        a(href="/about") 这里 
+        | 哦~
+      
+      p
+        a.btn.primary.large(href="/demo") Take a tour!
+
